@@ -11,4 +11,12 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
+  
+  default_tags {
+    tags = {
+      ManagedBy     = "Terraform"
+      Project       = "timing-system"
+      TerraformRepo = "github.com/elipwns/timing-system"
+    }
+  }
 }
