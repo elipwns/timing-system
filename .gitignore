@@ -83,3 +83,6 @@ lambda/*.zip
 # OS
 Thumbs.db
 .DS_Store
+
+# Terraform Lambda zip files
+terraform/*.zip
