@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# AWS
+.aws/
+*.pem
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Arduino
+*.hex
+*.elf
+*.bin
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.local
+secrets.h
+aws_*.h
+
+# Node (if using for dashboard)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build artifacts
+*.zip
+lambda/*.zip
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# OS
+Thumbs.db
+.DS_Store
