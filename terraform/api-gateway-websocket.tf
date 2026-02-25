@@ -14,22 +14,17 @@ resource "aws_apigatewayv2_stage" "websocket_prod" {
   auto_deploy = true
 }
 
-# WebSocket Routes (import after integrations)
+# WebSocket Routes
 resource "aws_apigatewayv2_route" "connect" {
   api_id    = aws_apigatewayv2_api.websocket.id
   route_key = "$connect"
-  target    = "integrations/gla8aeb"
+  target    = "integrations/${aws_apigatewayv2_integration.connect.id}"
 }
 
 resource "aws_apigatewayv2_route" "disconnect" {
   api_id    = aws_apigatewayv2_api.websocket.id
   route_key = "$disconnect"
-  target    = "integrations/wup2d82"
-}
-
-resource "aws_apigatewayv2_route" "default" {
-  api_id    = aws_apigatewayv2_api.websocket.id
-  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.disconnect.id}"
 }
 
 # WebSocket Integrations
