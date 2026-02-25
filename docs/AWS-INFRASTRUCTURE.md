@@ -1,7 +1,7 @@
 # AWS Infrastructure Inventory
 
 **Region:** us-west-2  
-**Account ID:** 772255980793  
+**Account ID:** YOUR_AWS_ACCOUNT_ID  
 **Created:** Manually via AWS Console  
 **Status:** Production (working system)
 
@@ -208,7 +208,7 @@
 ## SNS Topic
 
 **Name:** timing-events  
-**ARN:** arn:aws:sns:us-west-2:772255980793:timing-events  
+**ARN:** arn:aws:sns:us-west-2:YOUR_AWS_ACCOUNT_ID:timing-events  
 **Type:** Standard (not FIFO)
 
 **Subscriptions:**
@@ -240,14 +240,14 @@
         "Action": [
           "dynamodb:PutItem"
         ],
-        "Resource": "arn:aws:dynamodb:us-west-2:772255980793:table/timing-runs"
+        "Resource": "arn:aws:dynamodb:us-west-2:YOUR_AWS_ACCOUNT_ID:table/timing-runs"
       },
       {
         "Effect": "Allow",
         "Action": [
           "sns:Publish"
         ],
-        "Resource": "arn:aws:sns:us-west-2:772255980793:timing-events"
+        "Resource": "arn:aws:sns:us-west-2:YOUR_AWS_ACCOUNT_ID:timing-events"
       }
     ]
   }
@@ -270,7 +270,7 @@
         "Action": [
           "dynamodb:PutItem"
         ],
-        "Resource": "arn:aws:dynamodb:us-west-2:772255980793:table/websocket-connections"
+        "Resource": "arn:aws:dynamodb:us-west-2:YOUR_AWS_ACCOUNT_ID:table/websocket-connections"
       }
     ]
   }
@@ -293,7 +293,7 @@
         "Action": [
           "dynamodb:DeleteItem"
         ],
-        "Resource": "arn:aws:dynamodb:us-west-2:772255980793:table/websocket-connections"
+        "Resource": "arn:aws:dynamodb:us-west-2:YOUR_AWS_ACCOUNT_ID:table/websocket-connections"
       }
     ]
   }
@@ -317,14 +317,14 @@
           "dynamodb:Scan",
           "dynamodb:DeleteItem"
         ],
-        "Resource": "arn:aws:dynamodb:us-west-2:772255980793:table/websocket-connections"
+        "Resource": "arn:aws:dynamodb:us-west-2:YOUR_AWS_ACCOUNT_ID:table/websocket-connections"
       },
       {
         "Effect": "Allow",
         "Action": [
           "execute-api:ManageConnections"
         ],
-        "Resource": "arn:aws:execute-api:us-west-2:772255980793:v5rvshh3g7/prod/POST/@connections/*"
+        "Resource": "arn:aws:execute-api:us-west-2:YOUR_AWS_ACCOUNT_ID:v5rvshh3g7/prod/POST/@connections/*"
       }
     ]
   }
@@ -504,7 +504,7 @@ After Terraform deployment, verify:
 
 ## References
 
-- AWS Account: 772255980793
+- AWS Account: YOUR_AWS_ACCOUNT_ID
 - Region: us-west-2
 - Dashboard: https://elikloft.com/timing
 - GitHub: https://github.com/elipwns/timing-system
