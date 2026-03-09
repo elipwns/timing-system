@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:soloperformance.com)",
+      "WebFetch(domain:bcautosports.club)",
+      "mcp__Claude_Preview__preview_start",
+      "mcp__Desktop_Commander__write_file",
+      "Skill(commit-commands:commit-push-pr)",
+      "Skill(commit-commands:commit-push-pr:*)"
+    ]
+  }
+}

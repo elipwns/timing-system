@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motorsports Timing System</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+}
+
+.slides-wrap {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+}
+
+.slide {
+  display: none;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 52px 72px 72px;
+  position: absolute;
+  top: 0; left: 0;
+  overflow: hidden;
+  animation: fadeIn 0.25s ease;
+}
+.slide.active { display: flex; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Typography ── */
+.eyebrow {
+  font-size: 13px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #f04e23;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.05;
+  color: #fff;
+  letter-spacing: -1px;
+}
+
+h2 {
+  font-size: 44px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 30px;
+  letter-spacing: -0.5px;
+}
+
+.accent-bar {
+  width: 48px;
+  height: 4px;
+  background: #f04e23;
+  border-radius: 2px;
+  margin: 18px 0 28px;
+}
+
+.subtitle {
+  font-size: 22px;
+  color: #aaa;
+  line-height: 1.6;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+/* ── Tag chips ── */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 36px;
+  justify-content: center;
+}
+.chip {
+  background: #161616;
+  border: 1px solid #252525;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 15px;
+  color: #aaa;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+/* ── Two-column layout ── */
+.cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 52px;
+  flex: 1;
+  align-items: start;
+}
+
+.col-head {
+  font-size: 16px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #f04e23;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+/* ── Bullet list ── */
+ul.bullets {
+  list-style: none;
+  padding: 0;
+}
+ul.bullets li {
+  font-size: 26px;
+  padding: 8px 0 8px 28px;
+  position: relative;
+  color: #ddd;
+  line-height: 1.4;
+}
+ul.bullets li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: #f04e23;
+  font-size: 15px;
+  top: 12px;
+}
+
+/* ── Stat callouts ── */
+.stat-block { margin-bottom: 22px; }
+.stat { font-size: 58px; font-weight: 800; color: #f04e23; line-height: 1; letter-spacing: -2px; }
+.stat-sub { font-size: 18px; color: #888; margin-top: 3px; }
+
+/* ── Spec cards ── */
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.spec-card {
+  background: #141414;
+  border: 1px solid #1e1e1e;
+  border-radius: 10px;
+  padding: 18px 18px 14px;
+}
+.spec-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 8px;
+}
+.spec-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+.spec-note { font-size: 14px; color: #888; margin-top: 4px; }
+
+/* ── Cloud service cards ── */
+.service-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.svc {
+  background: #141414;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  padding: 14px 18px;
+  flex: 1;
+  min-width: 160px;
+}
+.svc-name { font-size: 21px; font-weight: 700; color: #fff; }
+.svc-sub  { font-size: 17px; color: #888; margin-top: 3px; }
+.svc.lambda { border-color: #1a3320; }
+.svc.lambda .svc-name { color: #4caf50; }
+.svc.apigw  { border-color: #1a2a40; }
+.svc.apigw  .svc-name { color: #5b9bd5; }
+.svc.dynamo { border-color: #2a1a40; }
+.svc.dynamo .svc-name { color: #9b7ec8; }
+.svc.sns    { border-color: #3a1a1a; }
+.svc.sns    .svc-name { color: #e57373; }
+.svc.ws     { border-color: #0e2830; }
+.svc.ws     .svc-name { color: #4dd0e1; }
+
+/* ── IaC highlight ── */
+.iac-note {
+  background: #0e1e0e;
+  border: 1px solid #1a3320;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-size: 18px;
+  color: #4caf50;
+  display: inline-block;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+/* ── Demo slide ── */
+.demo-outer {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+.demo-video-box {
+  border: 2px dashed #252525;
+  border-radius: 12px;
+  aspect-ratio: 16/9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0d0d0d;
+}
+.demo-big { font-size: 56px; font-weight: 800; color: #f04e23; letter-spacing: -2px; }
+.demo-hint { font-size: 16px; color: #777; text-align: center; max-width: 200px; line-height: 1.5; }
+
+.latency-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 20px;
+}
+.lat-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.lat-bar {
+  height: 34px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+.lat-label { font-size: 13px; color: #777; }
+.plus { color: #666; font-size: 20px; align-self: center; }
+.total-bar {
+  margin-top: 16px;
+  background: #1a1a1a;
+  border: 1px solid #252525;
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.total-num { font-size: 34px; font-weight: 800; color: #fff; }
+.total-label { font-size: 16px; color: #888; }
+
+/* ── Takeaways ── */
+.takeaway-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  flex: 1;
+  align-items: stretch;
+}
+.takeaway-card {
+  background: #0e0e0e;
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid #333;
+}
+.takeaway-card .head {
+  font-size: 16px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+.takeaway-card ul { list-style: none; flex: 1; }
+.takeaway-card li {
+  font-size: 21px;
+  color: #ccc;
+  padding: 6px 0;
+  padding-left: 20px;
+  position: relative;
+  line-height: 1.5;
+}
+.takeaway-card li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: #f04e23;
+}
+.takeaway-card.learned li::before { color: #5b9bd5; }
+
+/* ── Navigation ── */
+.nav-dots {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #252525;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.dot.active { background: #f04e23; transform: scale(1.3); }
+.dot:hover:not(.active) { background: #444; }
+
+.slide-num {
+  position: fixed;
+  bottom: 22px;
+  right: 36px;
+  font-size: 13px;
+  color: #555;
+  letter-spacing: 1px;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.key-hint {
+  position: fixed;
+  bottom: 22px;
+  left: 36px;
+  font-size: 13px;
+  color: #444;
+  letter-spacing: 0.5px;
+}
+</style>
+</head>
+<body>
+
+<div class="slides-wrap" id="slides-wrap">
+
+  <!-- ═══════════════════════════════════ SLIDE 1: TITLE ═══════════════════════════════════ -->
+  <div class="slide active" id="s1">
+    <img src="tree.png" style="position:absolute; left:20px; bottom:-30px; width:240px; opacity:0.10; filter:invert(1); mix-blend-mode:screen; pointer-events:none; user-select:none;">
+    <img src="car.png" style="position:absolute; right:20px; bottom:-863px; width:1500px; transform:scaleX(-1); opacity:0.12; filter:invert(1); mix-blend-mode:screen; pointer-events:none; user-select:none;">
+    <div style="margin-top: auto; margin-bottom: auto; text-align: center;">
+      <h1>Motorsports<br>Timing System</h1>
+      <div style="font-size: 15px; color: #555; margin-top: 14px; letter-spacing: 0.5px;">March 2026</div>
+      <div class="accent-bar" style="margin-left: auto; margin-right: auto;"></div>
+      <p class="subtitle">Wireless timing for drag racing and track days —<br>built on ESP32, LoRa radio, and AWS serverless.</p>
+      <div class="chips">
+        <span class="chip">ESP32 · LoRa Radio</span>
+        <span class="chip">AWS Serverless</span>
+        <span class="chip">WebSocket Dashboard</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ SLIDE 2: PROBLEM ══════════════════════════════════ -->
+  <div class="slide" id="s2">
+    <img src="farmtek.png" style="position:absolute; left:140px; bottom:90px; width:300px; border-radius:8px; opacity:0.85; pointer-events:none;">
+    <img src="esp32.jpg"   style="position:absolute; right:140px; top:90px; width:180px; border-radius:8px; opacity:0.85; pointer-events:none;">
+    <div style="display:flex; flex-direction:column; justify-content:center; flex:1; width:100%">
+      <h2>Why I Built This</h2>
+      <div class="cols" style="flex: unset;">
+        <div>
+          <div class="col-head">Commercial systems</div>
+          <ul class="bullets">
+            <li>$1,280+ for the base package</li>
+            <li>Proprietary hardware — no customization</li>
+            <li>Current event visible — no cross-event history</li>
+          </ul>
+        </div>
+        <div>
+          <div class="col-head">This build</div>
+          <div class="stat-block">
+            <div class="stat">~$50</div>
+            <div class="stat-sub">2× Heltec LoRa boards · trigger sensors TBD</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat">$0/mo</div>
+            <div class="stat-sub">AWS free tier · no ongoing cost</div>
+          </div>
+          <ul class="bullets" style="margin-top:8px">
+            <li>Open source — adaptable to any event format</li>
+            <li>Relay nodes for hill climbs &amp; long-range venues</li>
+            <li>Real-time dashboard for any number of viewers</li>
+            <li>Full run history in DynamoDB</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ SLIDE 3: ARCHITECTURE ═══════════════════════════════ -->
+  <div class="slide" id="s3">
+    <h2>System Architecture</h2>
+    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+      <svg viewBox="0 0 700 318" width="100%" style="max-height:72vh; font-family: system-ui, sans-serif; overflow:visible;" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ah-o" markerWidth="8" markerHeight="6" refX="7.5" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f04e23"/>
+          </marker>
+          <marker id="ah-g" markerWidth="8" markerHeight="6" refX="7.5" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#444"/>
+          </marker>
+        </defs>
+
+        <!-- AWS Cloud boundary -->
+        <rect x="220" y="4" width="472" height="254" rx="14" fill="none" stroke="#1a3356" stroke-width="1.5" stroke-dasharray="7,4"/>
+        <text x="238" y="21" fill="#254a7a" font-size="11" font-weight="700" letter-spacing="2">AWS CLOUD</text>
+
+        <!-- ── FINISH Board ── -->
+        <rect x="8" y="20" width="154" height="48" rx="8" fill="#121008" stroke="#e8c84a" stroke-width="1.5"/>
+        <text x="85" y="40" text-anchor="middle" fill="#e8c84a" font-size="11" font-weight="700" letter-spacing="1">FINISH BOARD</text>
+        <text x="85" y="57" text-anchor="middle" fill="#555" font-size="10">WiFi + LoRa</text>
+
+        <!-- LoRa dashed connector: START (bottom) sends up to FINISH (top) -->
+        <line x1="85" y1="168" x2="85" y2="68" stroke="#f04e23" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#ah-o)"/>
+        <rect x="36" y="111" width="98" height="14" rx="3" fill="#0a0a0a"/>
+        <text x="85" y="122" text-anchor="middle" fill="#f04e23" font-size="9" letter-spacing="1">LoRa · 905.2 MHz</text>
+
+        <!-- ── START Board ── -->
+        <rect x="8" y="168" width="154" height="48" rx="8" fill="#120a06" stroke="#f04e23" stroke-width="1.5"/>
+        <text x="85" y="188" text-anchor="middle" fill="#f04e23" font-size="11" font-weight="700" letter-spacing="1">START BOARD</text>
+        <text x="85" y="205" text-anchor="middle" fill="#555" font-size="10">Heltec LoRa 32 V3</text>
+
+        <!-- HTTPS arrow: straight line from FINISH right edge down to API GW -->
+        <line x1="162" y1="44" x2="228" y2="82" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+        <rect x="185" y="38" width="48" height="14" rx="2" fill="#0a0a0a"/>
+        <text x="209" y="49" text-anchor="middle" fill="#444" font-size="9" letter-spacing="1">HTTPS</text>
+
+        <!-- ── API Gateway ── -->
+        <rect x="230" y="58" width="154" height="48" rx="8" fill="#080e18" stroke="#3d7abf" stroke-width="1.5"/>
+        <text x="307" y="78" text-anchor="middle" fill="#5b9bd5" font-size="11" font-weight="700">API GATEWAY</text>
+        <text x="307" y="95" text-anchor="middle" fill="#555" font-size="10">REST · POST /timing</text>
+
+        <!-- Arrow: API GW ↓ Lambda store -->
+        <line x1="307" y1="106" x2="307" y2="127" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+        <!-- ── Lambda timing-store ── -->
+        <rect x="230" y="127" width="154" height="48" rx="8" fill="#070e07" stroke="#4caf50" stroke-width="1.5"/>
+        <text x="307" y="147" text-anchor="middle" fill="#4caf50" font-size="11" font-weight="700">λ timing-store</text>
+        <text x="307" y="164" text-anchor="middle" fill="#555" font-size="10">Python 3.12</text>
+
+        <!-- Arrow: Lambda store → SNS (horizontal right) -->
+        <line x1="384" y1="151" x2="430" y2="151" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+        <!-- Fork: Lambda store ↓ DynamoDB -->
+        <line x1="286" y1="175" x2="297" y2="200" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+        <!-- ── DynamoDB ── -->
+        <rect x="232" y="200" width="130" height="44" rx="8" fill="#0a0616" stroke="#9b7ec8" stroke-width="1.5"/>
+        <text x="297" y="220" text-anchor="middle" fill="#9b7ec8" font-size="11" font-weight="700">DynamoDB</text>
+        <text x="297" y="236" text-anchor="middle" fill="#555" font-size="10">timing-runs</text>
+
+        <!-- ── SNS Topic ── -->
+        <rect x="430" y="127" width="124" height="48" rx="8" fill="#130808" stroke="#e57373" stroke-width="1.5"/>
+        <text x="492" y="147" text-anchor="middle" fill="#e57373" font-size="11" font-weight="700">SNS TOPIC</text>
+        <text x="492" y="164" text-anchor="middle" fill="#555" font-size="10">timing-events</text>
+
+        <!-- Arrow: SNS ↓ Lambda ws-broadcast -->
+        <line x1="492" y1="175" x2="492" y2="198" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+        <!-- ── Lambda ws-broadcast ── -->
+        <rect x="430" y="198" width="124" height="48" rx="8" fill="#070e07" stroke="#4caf50" stroke-width="1.5"/>
+        <text x="492" y="218" text-anchor="middle" fill="#4caf50" font-size="11" font-weight="700">λ ws-broadcast</text>
+        <text x="492" y="235" text-anchor="middle" fill="#555" font-size="10">Python 3.12</text>
+
+        <!-- Arrow: ws-broadcast → WS API -->
+        <line x1="554" y1="222" x2="618" y2="222" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+
+        <!-- ── WebSocket API GW ── -->
+        <rect x="618" y="198" width="64" height="48" rx="8" fill="#060d10" stroke="#4dd0e1" stroke-width="1"/>
+        <text x="650" y="216" text-anchor="middle" fill="#4dd0e1" font-size="9" font-weight="700">WS API</text>
+        <text x="650" y="230" text-anchor="middle" fill="#555" font-size="9">GW</text>
+
+        <!-- Arrow: WS API → Browser (exits cloud box) -->
+        <line x1="650" y1="246" x2="650" y2="268" stroke="#444" stroke-width="1.5" marker-end="url(#ah-g)"/>
+        <rect x="610" y="250" width="80" height="14" rx="2" fill="#0a0a0a"/>
+        <text x="650" y="261" text-anchor="middle" fill="#333" font-size="9" letter-spacing="1">WebSocket</text>
+
+        <!-- ── Browser Dashboard ── -->
+        <rect x="590" y="272" width="120" height="40" rx="8" fill="#0e0e0e" stroke="#666" stroke-width="1.5"/>
+        <text x="650" y="290" text-anchor="middle" fill="#bbb" font-size="11" font-weight="700">DASHBOARD</text>
+        <text x="650" y="305" text-anchor="middle" fill="#444" font-size="10">Browser</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ SLIDE 4: HARDWARE ═══════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <img src="loraboard.webp" style="position:absolute; right:40px; bottom:40px; width:clamp(260px, 32vw, 560px); border-radius:8px; opacity:0.85; pointer-events:none;">
+    <h2>Hardware</h2>
+    <div class="cols">
+      <div>
+        <div class="col-head">Heltec LoRa 32 V3</div>
+        <ul class="bullets">
+          <li>ESP32 dual-core @ 240 MHz</li>
+          <li>SX1262 LoRa radio chip onboard</li>
+          <li>0.96" OLED display</li>
+          <li>Built-in LED, USB-C, onboard button</li>
+          <li>Battery management + solar charging input</li>
+          <li>~$25/board — no soldering needed</li>
+        </ul>
+        <div style="margin-top: 28px;">
+          <div class="col-head">Two boards, one protocol</div>
+          <ul class="bullets">
+            <li><strong style="color:#fff">START board:</strong> trigger (button or sensor) → sends LoRa packet</li>
+            <li><strong style="color:#fff">FINISH board:</strong> receives packet → starts timer → on trigger: calculates elapsed time, sends result via LoRa + HTTPS</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="col-head">LoRa Radio</div>
+        <div class="spec-grid">
+          <div class="spec-card">
+            <div class="spec-label">Frequency</div>
+            <div class="spec-val">905.2</div>
+            <div class="spec-note">MHz · US ISM band</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Bandwidth</div>
+            <div class="spec-val">125</div>
+            <div class="spec-note">kHz</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Spread Factor</div>
+            <div class="spec-val">SF7</div>
+            <div class="spec-note">speed ↑ range ↓</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">TX Power</div>
+            <div class="spec-val">14</div>
+            <div class="spec-note">dBm</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Range</div>
+            <div class="spec-val">500m</div>
+            <div class="spec-note">outdoors</div>
+          </div>
+          <div class="spec-card">
+            <div class="spec-label">Latency</div>
+            <div class="spec-val">~75ms</div>
+            <div class="spec-note">one-way packet</div>
+          </div>
+        </div>
+        <p style="font-size:16px; color:#888; margin-top:8px;">No WiFi needed at the track — LoRa handles the board-to-board link. Only the FINISH board needs internet access to reach AWS.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ SLIDE 5: CLOUD STACK ════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <img src="aws.webp" style="position:absolute; left:40px; bottom:80px; width:clamp(240px, 30vw, 500px); border-radius:8px; opacity:0.85; pointer-events:none;">
+    <h2>Cloud Stack</h2>
+    <div class="cols">
+      <div>
+        <div class="col-head">Lambda Functions · Python 3.12</div>
+        <div class="service-row">
+          <div class="svc lambda">
+            <div class="svc-name">λ timing-store</div>
+            <div class="svc-sub">REST POST → DynamoDB + SNS</div>
+          </div>
+        </div>
+        <div class="service-row">
+          <div class="svc lambda">
+            <div class="svc-name">λ ws-broadcast</div>
+            <div class="svc-sub">SNS → pushes to all WS clients</div>
+          </div>
+        </div>
+        <div class="service-row">
+          <div class="svc lambda">
+            <div class="svc-name">λ ws-connect / ws-disconnect</div>
+            <div class="svc-sub">Manages connectionId in DynamoDB</div>
+          </div>
+        </div>
+
+        <div class="col-head" style="margin-top:24px;">Storage &amp; Messaging</div>
+        <div class="service-row">
+          <div class="svc dynamo">
+            <div class="svc-name">DynamoDB</div>
+            <div class="svc-sub">timing-runs · websocket-connections</div>
+          </div>
+          <div class="svc sns">
+            <div class="svc-name">SNS Topic</div>
+            <div class="svc-sub">timing-events · fan-out</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="col-head">Infrastructure as Code</div>
+        <div class="iac-note">$ terraform apply</div>
+        <ul class="bullets" style="margin-top:16px;">
+          <li><code style="color:#e8c84a; background:#1a1500; padding:1px 6px; border-radius:4px;">archive_file</code> auto-packages Lambda — no build step</li>
+          <li>REST + WebSocket APIs, SNS, DynamoDB — one apply</li>
+          <li><code style="color:#e8c84a; background:#1a1500; padding:1px 6px; border-radius:4px;">import {}</code> blocks (TF 1.5+) — config auto-generated from live state</li>
+          <li>Flat <code style="color:#e8c84a; background:#1a1500; padding:1px 6px; border-radius:4px;">.tf</code> structure — no modules needed at this scale</li>
+        </ul>
+
+        <div class="col-head" style="margin-top:28px;">Real-Time Flow</div>
+        <ul class="bullets">
+          <li>Browser opens WebSocket connection on load</li>
+          <li>FINISH board POST triggers SNS fan-out</li>
+          <li>ws-broadcast pushes JSON to all connected clients</li>
+          <li>&lt;100ms dashboard update from board press</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ SLIDE 6: DEMO ═══════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <h2>Demo</h2>
+    <div class="demo-outer">
+      <div>
+        <div class="col-head">Flow</div>
+        <ul class="bullets">
+          <li>Trigger on <span style="color:#f04e23;font-weight:700;">START board</span> → LoRa packet sent</li>
+          <li>FINISH board receives → timer starts</li>
+          <li>Trigger on <span style="color:#e8c84a;font-weight:700;">FINISH board</span> → time calculated + sent</li>
+          <li>Dashboard updates live via WebSocket</li>
+        </ul>
+
+        <div style="margin-top:28px;">
+          <div class="col-head">End-to-end latency</div>
+          <div class="latency-row">
+            <div class="lat-seg">
+              <div class="lat-bar" style="background:#3a1a0a; border:1px solid #f04e23; color:#f04e23; width:70px;">~75ms</div>
+              <div class="lat-label">LoRa</div>
+            </div>
+            <div class="plus">+</div>
+            <div class="lat-seg">
+              <div class="lat-bar" style="background:#0e1829; border:1px solid #3d7abf; color:#5b9bd5; width:100px;">~250ms</div>
+              <div class="lat-label">HTTP + Lambda</div>
+            </div>
+            <div class="plus">+</div>
+            <div class="lat-seg">
+              <div class="lat-bar" style="background:#060d10; border:1px solid #4dd0e1; color:#4dd0e1; width:80px;">~75ms</div>
+              <div class="lat-label">WebSocket</div>
+            </div>
+          </div>
+          <div class="total-bar" style="margin-top:14px;">
+            <div>
+              <div class="total-num">&lt;500ms</div>
+              <div class="total-label">button press → dashboard update</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="demo-video-box" style="flex:1; padding:0; overflow:hidden;">
+          <video autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; border-radius:12px;">
+            <source src="demo.mp4" type="video/mp4">
+          </video>
+        </div>
+        <div style="background:#0a0a00; border:2px solid #e8c84a; border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:20px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=https://elikloft.com/timing&bgcolor=0a0a00&color=e8c84a&margin=4" width="110" height="110" style="border-radius:6px; flex-shrink:0;">
+          <div>
+            <div style="font-size:13px; letter-spacing:2.5px; text-transform:uppercase; color:#e8c84a; font-weight:700; margin-bottom:8px;">Try it live — scan or visit</div>
+            <div style="font-size:28px; font-weight:700; color:#fff; letter-spacing:1px;">elikloft.com/timing</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════ SLIDE 7: TAKEAWAYS ══════════════════════════════════ -->
+  <div class="slide" id="s7">
+    <h2>Takeaways</h2>
+    <div class="takeaway-grid">
+      <div class="takeaway-card" style="border-top-color:#f04e23;">
+        <div class="head" style="color:#f04e23;">What I Built</div>
+        <ul>
+          <li>End-to-end IoT system from scratch</li>
+          <li>C++ firmware on bare metal ESP32</li>
+          <li>Serverless backend: 4 Lambda functions</li>
+          <li>Real-time WebSocket dashboard</li>
+          <li>~$50 hardware, $0/month AWS</li>
+        </ul>
+      </div>
+      <div class="takeaway-card learned" style="border-top-color:#3d7abf;">
+        <div class="head" style="color:#5b9bd5;">What I Learned</div>
+        <ul>
+          <li>LoRa radio protocol &amp; ISM band regs</li>
+          <li>Interrupt-driven embedded systems</li>
+          <li>API Gateway REST + WebSocket</li>
+          <li>SNS fan-out pattern</li>
+          <li>Terraform: importing &amp; managing existing AWS state</li>
+        </ul>
+      </div>
+      <div class="takeaway-card" style="border-top-color:#4caf50;">
+        <div class="head" style="color:#4caf50;">What's Next</div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-top:4px;">
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">Leaderboard &amp; history</span>
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">Multi-lane support</span>
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">Hardware trigger sensors</span>
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">Mobile app for drivers</span>
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">GPS lap timing</span>
+          <span style="background:#0a1a0a; border:1px solid #2a5a2a; color:#4caf50; border-radius:20px; padding:6px 14px; font-size:17px;">Weather &amp; density altitude</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:20px; padding-top:20px; border-top:1px solid #1a1a1a; display:flex; gap:20px; align-items:center;">
+      <span style="font-size:15px; color:#444;">Hardware → Firmware → Cloud → Frontend</span>
+      <span style="margin-left:auto; background:#111; border:1px solid #222; border-radius:8px; padding:6px 14px; font-size:15px; color:#888;">github.com/elipwns/timing-system</span>
+      <span style="background:#111; border:1px solid #f04e23; border-radius:8px; padding:6px 14px; font-size:15px; color:#f04e23;">elikloft.com/timing</span>
+    </div>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<!-- Navigation -->
+<div class="nav-dots" id="nav-dots"></div>
+<div class="slide-num" id="slide-num"></div>
+<div class="key-hint">← → to navigate</div>
+
+<script>
+const TOTAL = 7;
+let cur = 1;
+
+const slides = Array.from({length: TOTAL}, (_, i) => document.getElementById('s'+(i+1)));
+const dotsEl = document.getElementById('nav-dots');
+const numEl  = document.getElementById('slide-num');
+
+// Build dots
+for (let i = 1; i <= TOTAL; i++) {
+  const d = document.createElement('div');
+  d.className = 'dot' + (i === 1 ? ' active' : '');
+  d.addEventListener('click', () => goTo(i));
+  dotsEl.appendChild(d);
+}
+
+function goTo(n) {
+  slides[cur - 1].classList.remove('active');
+  dotsEl.children[cur - 1].classList.remove('active');
+  cur = Math.max(1, Math.min(TOTAL, n));
+  slides[cur - 1].classList.add('active');
+  dotsEl.children[cur - 1].classList.add('active');
+  numEl.textContent = cur + ' / ' + TOTAL;
+}
+
+goTo(1);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') goTo(cur + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    goTo(cur - 1);
+  if (e.key === 'Home') goTo(1);
+  if (e.key === 'End')  goTo(TOTAL);
+});
+
+// Click anywhere on slide to advance (except nav dots)
+document.getElementById('slides-wrap').addEventListener('click', e => {
+  if (!e.target.closest('.nav-dots')) goTo(cur + 1);
+});
+</script>
+</body>
+</html>
