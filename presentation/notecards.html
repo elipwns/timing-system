@@ -74,6 +74,18 @@ h1 {
   font-family: 'SF Mono', 'Consolas', monospace;
 }
 
+/* SAY THIS section */
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+.section-label.say { color: #f04e23; }
+.section-label.know { color: #5b9bd5; }
+
 .points {
   list-style: none;
   padding: 0;
@@ -82,7 +94,7 @@ h1 {
 .points li {
   padding: 5px 0 5px 20px;
   position: relative;
-  color: #333;
+  color: #222;
   font-size: 15px;
 }
 
@@ -95,8 +107,45 @@ h1 {
   top: 7px;
 }
 
-.points li strong {
+/* KNOW THIS section */
+.know-box {
+  margin-top: 14px;
+  background: #f0f6ff;
+  border-left: 3px solid #5b9bd5;
+  border-radius: 4px;
+  padding: 10px 14px;
+}
+
+.know-box ul {
+  list-style: none;
+  padding: 0;
+}
+
+.know-box ul li {
+  padding: 4px 0 4px 18px;
+  position: relative;
+  color: #3a5a80;
+  font-size: 13px;
+}
+
+.know-box ul li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  color: #5b9bd5;
+  font-size: 16px;
+  top: 2px;
+}
+
+.points li strong, .know-box li strong {
   color: #111;
+}
+
+code {
+  background: #f0f0f0;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 13px;
 }
 
 .note {
@@ -143,6 +192,7 @@ h1 {
   .card { break-inside: avoid; page-break-inside: avoid; border-left: 3px solid #f04e23; }
   .note { background: #fffde0; }
   .dont { background: #fff0f0; }
+  .know-box { background: #e8f0fb; }
 }
 </style>
 </head>
@@ -156,14 +206,13 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 1</div>
     <div class="card-title">Title</div>
-    <div class="card-timing">0:00 – 0:20</div>
+    <div class="card-timing">5:00 – 4:40</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li>Introduce yourself and what this is: <strong>"a wireless timing system for motorsports — drag racing, autocross, track days."</strong></li>
-    <li>Built with two small radio boards, a serverless AWS backend, and a real-time browser dashboard.</li>
-    <li>Keep it one sentence — just set the stage, everything else comes later.</li>
+    <li>"This is a wireless timing system for motorsports — drag racing, autocross, track days — built with two small radio boards, a serverless AWS backend, and a real-time browser dashboard."</li>
   </ul>
-  <div class="note">Don't list all the tech yet. Just say it's a timing system and move on.</div>
+  <div class="note">One sentence, set the stage. Don't list all the tech yet — everything comes later.</div>
 </div>
 
 <!-- ─────────────────── CARD 2 ─────────────────── -->
@@ -171,13 +220,13 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 2</div>
     <div class="card-title">Why I Built This</div>
-    <div class="card-timing">0:20 – 0:50</div>
+    <div class="card-timing">4:40 – 4:10</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li><strong>The problem:</strong> commercial timing systems cost hundreds to thousands of dollars and require physical gates or dedicated hardware.</li>
-    <li><strong>The point:</strong> I wanted to build one for ~$50 in hardware that costs nothing to run and stores results in the cloud.</li>
-    <li>Mention the two stats on the slide: <strong>~$50 hardware</strong>, <strong>$0/month AWS</strong> — then move straight to architecture.</li>
-    <li>No need to dwell here, the audience will get it fast.</li>
+    <li>"Commercial systems start at $1,280 and are proprietary black boxes."</li>
+    <li>"I wanted something open, cheap, and extensible — ~$50 in the two boards so far, trip sensors still on the roadmap, and it stays within the AWS free tier so zero ongoing cost."</li>
+    <li>Point at the two numbers on the slide: <strong>~$50 boards</strong>, <strong>$0/month AWS</strong>.</li>
   </ul>
   <div class="dont">Don't over-explain the problem. These are engineers — they get it in 10 seconds.</div>
 </div>
@@ -187,21 +236,24 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 3</div>
     <div class="card-title">System Architecture</div>
-    <div class="card-timing">0:50 – 1:50</div>
+    <div class="card-timing">4:10 – 3:10</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li>Walk the diagram <strong>left to right, top to bottom</strong>: START board → LoRa → FINISH board → HTTPS → API Gateway.</li>
-    <li>At API Gateway: <strong>"a Lambda function stores the run in DynamoDB and publishes to an SNS topic."</strong></li>
-    <li>From SNS: <strong>"a second Lambda picks it up and pushes it to every connected browser via WebSocket."</strong></li>
-    <li>At the bottom: <strong>"the browser dashboard gets a live update in under 500ms."</strong></li>
-    <li>If anyone asks about the two boards: there's a START board at the start line and a FINISH board at the finish — they talk over LoRa radio.</li>
+    <li>Walk the diagram <strong>left to right</strong>: "START board fires a LoRa packet — FINISH board receives it and starts a timer."</li>
+    <li>"When the run ends, the FINISH board POSTs over HTTPS to API Gateway."</li>
+    <li>"A Lambda stores the run in DynamoDB and publishes to SNS — Simple Notification Service — which fans out to a second Lambda."</li>
+    <li>"That Lambda pushes the result to every connected browser via WebSocket. Dashboard updates in under 500ms."</li>
   </ul>
-  <div class="note">This is the most important slide. Don't rush it. If you can, point at each box as you say its name — helps on a screen share.</div>
-  <hr class="divider">
-  <ul class="points" style="font-size:13px; color:#888;">
-    <li>SNS is the fan-out. Right now it only has the one subscriber, but it would be trivial to add logging, SMS alerts, etc.</li>
-    <li>DynamoDB schema: timing-runs table (partition: date, sort: timestamp).</li>
-  </ul>
+  <div class="section-label know">🧠 Know This</div>
+  <div class="know-box">
+    <ul>
+      <li>The LoRa packet is just a run number (<code>START:1</code>) — no timestamp. The finish board starts its own local timer on packet receipt.</li>
+      <li>SNS is the fan-out. Right now one subscriber, but trivial to add logging, SMS, etc.</li>
+      <li>DynamoDB schema: <code>timing-runs</code> table — partition key: <code>date</code>, sort key: <code>timestamp</code>.</li>
+    </ul>
+  </div>
+  <div class="note">Most important slide. Don't rush it. Point at each box as you say its name — helps on a screen share.</div>
 </div>
 
 <!-- ─────────────────── CARD 4 ─────────────────── -->
@@ -209,16 +261,24 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 4</div>
     <div class="card-title">Hardware</div>
-    <div class="card-timing">1:50 – 2:40</div>
+    <div class="card-timing">3:10 – 2:25</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li><strong>"Heltec LoRa 32 V3"</strong> — ESP32 chip with an SX1262 LoRa radio and a tiny OLED display, all on one $25 board.</li>
-    <li>LoRa is a long-range radio protocol. No WiFi needed at the track — the two boards talk directly at <strong>905 MHz</strong>, up to 500m outdoors.</li>
-    <li>Only the FINISH board needs WiFi — to reach AWS. The radio link is purely board-to-board.</li>
-    <li>Firmware is C++ (Arduino framework). Interrupt-driven LoRa receive — no polling, just a flag that fires when a packet arrives.</li>
-    <li>FINISH board supports up to 10 concurrent runs in a queue (FIFO) — so you could stage multiple cars.</li>
+    <li>"Heltec LoRa 32 V3 — ESP32 dual-core with an SX1262 LoRa radio built in. $25 each. Right now the trigger is just a button — no soldering yet. Proper hardware trip sensors would need it, but that's on the roadmap."</li>
+    <li>"LoRa is a long-range radio protocol — boards talk directly at 905 MHz. Only the FINISH board needs internet to reach AWS, so a phone hotspot works fine."</li>
+    <li>"My setup gets around 500m — more than enough for any track. The LoRa world record is 830 miles, set with a high-altitude balloon. So we're leaving a little range on the table."</li>
+    <li>"The board even has solar charging input — wild for $25."</li>
   </ul>
-  <div class="note">If you have the boards on your desk: hold them up briefly for the camera. Two second moment — much more real than a slide.</div>
+  <div class="section-label know">🧠 Know This</div>
+  <div class="know-box">
+    <ul>
+      <li>Firmware is C++ (Arduino framework). Interrupt-driven LoRa receive — no polling, just a flag that fires when a packet arrives.</li>
+      <li>FINISH board supports up to 10 concurrent runs in a queue (FIFO) — could stage multiple cars.</li>
+      <li>OLED screens are broken from sun damage — fine for the POC, the dashboard is the wow moment.</li>
+    </ul>
+  </div>
+  <div class="note">If the boards are on your desk, hold them up briefly. Two seconds — much more real than a slide.</div>
 </div>
 
 <!-- ─────────────────── CARD 5 ─────────────────── -->
@@ -226,16 +286,24 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 5</div>
     <div class="card-title">Cloud Stack</div>
-    <div class="card-timing">2:40 – 3:30</div>
+    <div class="card-timing">2:25 – 1:35</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li><strong>Four Lambda functions</strong> — Python 3.12. Two handle REST (store timing data), two handle WebSocket lifecycle (connect/disconnect).</li>
-    <li>DynamoDB for run history, SNS for fan-out to the WebSocket broadcaster.</li>
-    <li><strong>Terraform</strong> — all infrastructure is code. <code style="background:#f0f0f0; padding:1px 5px; border-radius:3px;">terraform apply</code> re-zips and deploys Lambdas automatically. Mention this specifically — the PO will notice.</li>
-    <li>WebSocket keeps a DynamoDB table of active connectionIds. On each timing event, ws-broadcast iterates and pushes to every connected browser.</li>
-    <li>Dashboard: elikloft.com/timing — unlimited concurrent viewers.</li>
+    <li>"Everything is in Terraform — all four Lambda functions, both API Gateways, the SNS topic, the database. One <code>terraform apply</code> and the whole stack is up."</li>
+    <li>"Big thing I want to call out: I used <strong>import blocks</strong> — a TF 1.5+ feature. You declare what you want to import in the <code>.tf</code> file, run <code>terraform plan -generate-config-out</code>, and it writes the resource config for you directly from live state. Completely different from the old CLI import."</li>
+    <li>"The part I found really interesting is how the live push to every browser works — there's no persistent server. When a browser opens the dashboard, API Gateway assigns it a unique connection ID and fires a Lambda that writes it to DynamoDB. That's the live connection registry. When a result comes in, the broadcast Lambda reads that list and pushes to every client. DynamoDB doing double duty — run history and connection registry."</li>
+    <li><em>(optional if time)</em> "Cleanup is lazy and kind of elegant — if a tab crashes without a clean disconnect, the dead ID just sits in DynamoDB until the next run. When broadcast tries to push to it, the Management API returns a <code>GoneException</code>. Lambda catches it, deletes the stale ID on the spot, and moves on. No separate cleanup job needed."</li>
   </ul>
-  <div class="note">Lead with Terraform — "all of this is infrastructure as code, version-controlled, no manual console clicks." That lands well with the unix crowd.</div>
+  <div class="section-label know">🧠 Know This</div>
+  <div class="know-box">
+    <ul>
+      <li>Import blocks are idempotent and version-controlled — the old <code>terraform import</code> CLI was a one-shot side effect with no record in code. Import blocks live in <code>.tf</code> files, get reviewed in PRs, can be re-run safely.</li>
+      <li><strong>Two disconnect paths:</strong> (1) Clean close → API Gateway fires <code>$disconnect</code> → Lambda deletes the ID immediately. (2) Crash/drop → ID stays in DynamoDB until next broadcast → broadcast Lambda catches <code>GoneException</code> (HTTP 410) from the Management API → deletes stale ID inline. Lazy garbage collection, no sweep job.</li>
+      <li>SNS = Simple Notification Service — the pub/sub fan-out between <code>timing-store</code> and <code>websocket-broadcast</code>.</li>
+    </ul>
+  </div>
+  <div class="note">Lead with Terraform — "all infrastructure is code, version-controlled, no manual console clicks." That lands well with this audience.</div>
   <div class="dont">Don't get into IAM policy details unless asked. Stay at the "what and why" level.</div>
 </div>
 
@@ -244,16 +312,23 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 6</div>
     <div class="card-title">Demo</div>
-    <div class="card-timing">3:30 – 4:30</div>
+    <div class="card-timing">1:35 – 0:35</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li><strong>Option A — Video loop:</strong> play a pre-recorded 20-30 second clip in the background. Walk through the steps as the video shows them: board press → LoRa → FINISH → time on screen → dashboard update.</li>
-    <li><strong>Option B — Live dashboard:</strong> alt-tab to elikloft.com/timing during this slide. If AWS is up, press the boards live.</li>
-    <li>Either way: talk through the latency breakdown: LoRa ~75ms, HTTP+Lambda ~250ms, WebSocket ~75ms. <strong>Under 500ms total.</strong></li>
-    <li>Emphasize: <strong>"this is a fully live system — not a mockup."</strong></li>
+    <li>"Here's the flow live." — [hit start board, hit finish board, show dashboard updating]</li>
+    <li>"End-to-end under 500ms — button press to dashboard update."</li>
+    <li>"If you want to see it yourself, scan the QR or go to elikloft.com/timing — open it on your phone right now and you'll see it update in real time."</li>
   </ul>
-  <div class="note">Rehearse the demo specifically. Know which option you're using before Monday. If using a video, make sure it's trimmed and loops cleanly.</div>
-  <div class="dont">Don't apologize if something goes wrong. Just say "let me show this part of the code / dashboard screenshot" and keep going.</div>
+  <div class="section-label know">🧠 Know This</div>
+  <div class="know-box">
+    <ul>
+      <li>Boards just need power — already flashed, connect to WiFi automatically.</li>
+      <li>If the live demo fails, the looping video on the slide is the fallback — just narrate over it.</li>
+      <li>Latency breakdown: LoRa ~75ms · HTTP + Lambda ~250ms · WebSocket ~75ms = &lt;500ms total.</li>
+    </ul>
+  </div>
+  <div class="dont">Don't apologize if something goes wrong. Just say "let me show the dashboard" and keep going.</div>
 </div>
 
 <!-- ─────────────────── CARD 7 ─────────────────── -->
@@ -261,16 +336,24 @@ h1 {
   <div class="card-header">
     <div class="card-num">Slide 7</div>
     <div class="card-title">Takeaways</div>
-    <div class="card-timing">4:30 – 5:00</div>
+    <div class="card-timing">0:35 – 0:00</div>
   </div>
+  <div class="section-label say">🗣 Say This</div>
   <ul class="points">
-    <li>Hit the "full-stack" breadth: <strong>C++ firmware → Python Lambda → WebSocket browser client.</strong></li>
-    <li>Interesting technical challenge: LoRa interrupt handling in embedded C++ is not obvious — the radio fires an ISR that sets a flag, and the main loop checks it.</li>
-    <li>Terraform: importing pre-existing AWS resources into state was more interesting than a greenfield deploy.</li>
-    <li>Close with future directions — GPS, multi-lane, mobile app — then <strong>open the floor.</strong></li>
-    <li>Hard stop at 5:00. If you're on slide 7 at 4:45, you're in good shape.</li>
+    <li>"Full IoT stack — C++ firmware, Python Lambdas, WebSocket browser client — ~$50 in boards so far."</li>
+    <li>"Biggest learns: the SNS fan-out pattern — one publish, multiple subscribers, trivial to extend — and using DynamoDB for double duty as both run history and live WebSocket connection registry. That one felt really slick."</li>
+    <li>"Next up: leaderboard with run history, hardware trip sensors to replace the button, multi-lane support."</li>
+    <li>"Happy to dig into any part of this."</li>
   </ul>
+  <div class="section-label know">🧠 Know This</div>
+  <div class="know-box">
+    <ul>
+      <li>Leaderboard gap: dashboard is WebSocket-only, no history on refresh. All data is in DynamoDB — just needs a GET Lambda endpoint. Deferred to post-presentation roadmap.</li>
+      <li>ISM band = unlicensed radio spectrum. 905.2 MHz is in the US ISM band — legal to use without a license.</li>
+    </ul>
+  </div>
   <div class="note">End with "happy to dig into any part of this" — not "any questions?" Keeps it active.</div>
+  <div class="note">Hard stop at 5:00. If you're on slide 7 at 4:45, you're in great shape.</div>
 </div>
 
 <!-- ─────────────────── TOTAL TIME ─────────────────── -->
@@ -282,7 +365,7 @@ h1 {
 
 <div style="margin-top: 32px; font-size: 13px; color: #aaa;">
   <strong style="color:#666;">Quick reference:</strong>
-  Slide 1 (0:20) · Slide 2 (0:30) · Slide 3 (1:00) · Slide 4 (0:50) · Slide 5 (0:50) · Slide 6 (1:00) · Slide 7 (0:30)
+  Slide 1 (0:20) · Slide 2 (0:30) · Slide 3 (1:00) · Slide 4 (0:45) · Slide 5 (0:50) · Slide 6 (1:00) · Slide 7 (0:35)
 </div>
 
 </body>
