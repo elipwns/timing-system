@@ -4,6 +4,96 @@ Ideas that are too big or too speculative for the README checklist, but worth pr
 
 ---
 
+## 🏗️ Hub-and-Spoke Architecture (Next Major Refactor)
+
+**The core idea:** Separate sensor nodes from the cloud uploader. Every checkpoint node is dumb and cheap — it only needs to detect a beam break and fire a LoRa message. One central "hub" node at the timing table receives all messages, does the math, and posts to AWS.
+
+```
+[START node]     ──LoRa──→ ┐
+[SECTOR 1 node]  ──LoRa──→ ├→ [HTIT-Tracker at timing table] ──WiFi──→ AWS → Dashboard
+[SECTOR 2 node]  ──LoRa──→ ┘
+[FINISH node]    ──LoRa──→ ┘
+```
+
+### Why this is better than the current architecture
+
+Currently the FINISH node does double duty — it's both a sensor node AND the WiFi/cloud uploader. That means it needs to be physically at the finish line AND near WiFi, which creates placement constraints. Separating these roles is cleaner and more scalable.
+
+### The hub node: HTIT-Tracker
+
+The HTIT-Tracker is the natural fit for the hub role:
+- Has built-in GPS — provides a single consistent clock source for timestamping all received LoRa messages. No need to sync clocks across nodes.
+- WiFi capable — posts to AWS from wherever the timing table is
+- Can sit at the timing tent, trailer, or scoring table — not tied to any physical timing line
+- Same hardware can serve dual purpose: hub for timing events, or in-car GPS/telemetry node for track days (different firmware)
+
+### Sensor node design (simplified)
+
+Every checkpoint node becomes identical and minimal:
+- ESP32 (Heltec V3 or V4)
+- IR beam break sensor on a GPIO interrupt
+- LoRa radio — transmits `BEAM_BREAK:checkpoint_id:local_millis` on trigger
+- Solar charged LiPo (bq25185 + 18650 + small panel)
+- No WiFi needed at sensor nodes
+- 3D printed weatherproof enclosure
+
+This makes sensor nodes cheap, replaceable, and easy to add. 6 sector nodes costs less than one fancy unit.
+
+### Message protocol (proposed)
+
+```
+Sensor → Hub:   BEAM:checkpoint_id:local_millis
+Hub → AWS:      { run_id, checkpoint_id, hub_timestamp, sector_times[] }
+```
+
+Hub uses its GPS-derived timestamp when it receives each LoRa message — single clock source, no sync needed across nodes.
+
+---
+
+## 🚦 IR Beam Break Sensor Integration
+
+**Replaces button presses with real detection.** The current firmware uses a physical button to simulate start/finish. IR beam break sensors are a drop-in replacement — the receiver output is just a GPIO that flips when the beam is blocked.
+
+### Hardware
+- Emitter side: IR LED + resistor, powered continuously, no logic
+- Receiver side: phototransistor output → GPIO input with pullup
+- One GPIO interrupt per node, same as the current button pin
+
+### Wiring
+```
+Emitter: VCC → resistor → IR LED → GND (always on)
+Receiver: VCC → phototransistor → GPIO (pullup to VCC)
+```
+
+### Firmware change
+Swap `digitalRead(BUTTON_PIN)` for an interrupt on the IR receiver GPIO. Beam present = HIGH, beam broken = LOW (or inverted depending on receiver circuit). Debounce logic needed — cars are fast but the signal can chatter.
+
+### Physical considerations
+- Emitter and receiver mount on opposite sides of the course
+- Long cable runs back to the node enclosure
+- Alignment is critical — small misalignment kills the beam at distance
+- Consider a small bracket/housing for emitter and receiver that can be staked into the ground or clamped to cones
+
+---
+
+## ☀️ Solar Power
+
+**Goal:** Nodes that run all day without battery swaps. Currently using USB power / 9V batteries which require frequent replacement at events.
+
+### Power budget (per sensor node)
+- ESP32 active: ~80-240mA, light sleep between events: ~2-5mA
+- IR emitter: ~20-50mA continuous
+- Estimated average: ~50-100mA
+- All-day (12hr) requirement: ~600mAh-1.2Ah
+
+### Solution
+- **18650 LiPo** (2500-3500mAh) — covers a full day with headroom even without solar
+- **bq25185 solar charger** — same component already selected for Meshtastic node build. Solar in, LiPo management, regulated 5V out.
+- **Small solar panel** (1-2W, 6V) — net-zero or net-positive on a sunny day. Overcast still draws down slowly but battery buffer covers it.
+- Standardize this power stack across timing nodes and Meshtastic nodes — same BOM, same enclosure design pattern.
+
+---
+
 ## 📊 Historical Performance Dashboard
 
 **The core idea:** *"How did I do compared to last season?"*
@@ -75,3 +165,14 @@ The timing system doesn't dictate how you detect a car crossing the line. Curren
 - Reuse existing commercial IR gates as dumb sensors feeding into the ESP32
 
 Keeping this flexible is a feature — different events have different requirements and budgets.
+
+---
+
+## 🧰 Hardware Inventory & Role Assignment
+
+| Board | Count | Assigned Role |
+|---|---|---|
+| Heltec V3 | 2 | Current start/finish nodes — keep deployed, working |
+| Heltec V4 | 2 | Sector/checkpoint nodes — newer hardware, better sleep current |
+| HTIT-Tracker | 1 | Hub node at timing table (GPS clock source + WiFi uploader) OR in-car telemetry for track days |
+| RAK10724 | 1 (incoming) | Meshtastic outdoor node — not part of timing system |
