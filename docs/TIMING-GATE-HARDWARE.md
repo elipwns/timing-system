@@ -19,6 +19,49 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 - Each housing is self-contained: solar panel + LiPo, no cables between sides
 - Both housings point at each other — alignment is handled by rotating the tripod head
 - Short alignment tube around IR elements narrows acceptance angle, makes alignment positive and deliberate
+- Two distinct housing designs: emitter is compact/square (square panel), receiver is longer (rectangular panel + antenna). Immediately visually distinct at event setup.
+
+---
+
+## Solar Panels — Sourcing
+
+Both panels are from Voltaic Systems via Adafruit. ETFE coating — superior to epoxy or PET, IP67 waterproof, UV resistant, 5-7 year rated life, 22+% efficiency monocrystalline SunPower cells. 2-year warranty. Solder pads on back (no connector included).
+
+**Note on voltage:** Both panels are nominally 5V but output 6-6.1V at peak power point. This feeds the TP4056 (accepts 4.35-6V) and bq25185 perfectly.
+
+### Emitter panel — Voltaic P123
+- **Adafruit product ID**: 5856
+- **URL**: https://www.adafruit.com/product/5856
+- **Price**: $8.95
+- **Dimensions**: 65.5 x 65.5 x 3.1mm (square)
+- **Output**: 5V nominal, ~6V peak, 120mA peak, 0.6W
+- **Stock**: In stock (68 units as of March 2026)
+- **Why**: Square footprint drives a compact symmetric emitter housing. 0.6W is more than sufficient for ~45mA emitter draw. Visually distinct from receiver.
+
+### Receiver panel — Voltaic P124
+- **Adafruit product ID**: 5368
+- **URL**: https://www.adafruit.com/product/5368
+- **Price**: $14.95
+- **Dimensions**: 66 x 113 x 2.6mm (rectangular)
+- **Output**: 5V nominal, ~6.07V peak, 200mA peak, 1.2W
+- **Stock**: In stock (as of March 2026)
+- **Why**: Higher output suits ESP32 + LoRa draw (~80-100mA avg). Rectangular lid makes receiver housing immediately identifiable vs emitter. Antenna on side is the other visual differentiator.
+
+### Voltaic lineup stock status (as of March 2026)
+| Panel | Status |
+|---|---|
+| Small 6V 1W | Out of stock |
+| Medium 6V 2W | Out of stock |
+| Large 6V 3.5W | Out of stock |
+| Huge 6V 6W | No longer stocked |
+| Colossal 6V 9W | Out of stock |
+| 2V 0.3W ETFE | $5.50 — in stock |
+| **5V 1.2W ETFE (P124)** | **$14.95 — in stock ✅ (receiver)** |
+| 5V 0.3W ETFE | Out of stock |
+| **5V 0.6W ETFE (P123)** | **$8.95 — in stock ✅ (emitter)** |
+| 6V 2W ETFE | $20.95 — in stock |
+| 5V 5W ETFE | $34.95 — in stock |
+| 5V 10W ETFE | $64.95 — in stock |
 
 ---
 
@@ -29,8 +72,8 @@ This is the "brain" of each gate. One per gate (x2 total for start + finish).
 ### Electronics
 - **ESP32**: Heltec V3 or V4
 - **Solar charger**: bq25185 (same BOM as Meshtastic outdoor node)
-- **Battery**: 18650 LiPo
-- **Solar panel**: small panel, top or angled face of enclosure
+- **Battery**: flat LiPo, ~2000mAh
+- **Solar panel**: Voltaic P124, 66 x 113mm, rectangular lid face
 - **Sensor**: IR phototransistor, forward-facing through alignment tube
 - **Radio**: LoRa antenna — SMA bulkhead on enclosure side
 
@@ -47,9 +90,10 @@ This is the "brain" of each gate. One per gate (x2 total for start + finish).
 
 ### Mechanical
 - ¼-20 threaded insert on bottom for tripod mount
-- Solar panel as top lid face, angled slightly skyward
+- Solar panel (66 x 113mm) as top lid face
 - IR phototransistor mounted in forward-facing tube (10-15mm) to narrow acceptance angle
 - SMA bulkhead on side for LoRa antenna
+- USB-C port on side/bottom for direct charging
 - Weatherproof — sealed enough for outdoor event use
 
 ---
@@ -59,21 +103,26 @@ This is the "brain" of each gate. One per gate (x2 total for start + finish).
 Just needs to blast IR light continuously. One per gate (x2 total).
 
 ### Electronics
-- **IR LED**: forward-facing, matched wavelength to receiver phototransistor
-- **Resistor**: current limiting for IR LED
-- **Charge board**: TP4056 USB-C (simple, cheap, $1-2) — no need for bq25185 complexity
-- **Battery**: small LiPo
-- **Solar panel**: same form factor as receiver housing for visual consistency
+- **IR LED**: forward-facing 940nm, ~40mA continuous
+- **Current limiting resistor**: calculate based on supply voltage
+- **Charge board**: TP4056 USB-C with dual protection (3-chip variant with DW01A) — ~$2-3 in multipacks
+  - Load must connect to OUT+/OUT- pads, NOT directly to battery terminals
+  - Solar input via Schottky diode to IN+ pad (use Schottky from existing pack for low forward voltage drop)
+- **Battery**: flat LiPo ~2000mAh (45mA draw × 9hr × 3 days = 1215mAh worst case, 2000mAh covers with headroom)
+- **Solar panel**: Voltaic P123, 65.5 x 65.5mm, square lid face
+- **Schottky diode**: from existing diode pack — low forward voltage drop preserves charging efficiency
 
 ### Status LEDs
-- **Power on**: confirms unit is live
-- **Aim assist**: visible-light LED (red or green) mounted directly next to the IR LED — lets you visually aim the housing at the receiver before IR alignment is confirmed. IR is invisible; this makes coarse alignment easy.
+- **Power on**: confirms unit is live, ~5mA
+- **Aim assist**: visible-light LED (red or green) mounted directly next to the IR LED — coarse visual aiming before IR alignment confirmed. IR is invisible; this makes setup fast.
 
 ### Mechanical
 - ¼-20 threaded insert on bottom for tripod mount
+- Solar panel (65.5 x 65.5mm) as square top lid face
 - IR LED mounted in forward-facing alignment tube, same spec as receiver side
 - Aim assist LED adjacent to IR LED, same forward face
-- USB-C port accessible for charging (TP4056)
+- USB-C port accessible on side/bottom for charging (TP4056)
+- NO antenna — key visual differentiator from receiver
 - Weatherproof
 
 ---
@@ -90,26 +139,37 @@ A short tube (10-15mm length, ~8mm ID) around each IR element:
 
 ## Power Notes
 
-- Emitter draws ~20-50mA continuous — even a 500mAh LiPo lasts 10+ hours. Solar is bonus.
-- Receiver ESP32 in light sleep + IR monitoring: ~50-100mA average. 18650 (2500mAh) covers a full day.
-- bq25185 on receiver matches Meshtastic node BOM — standardized power stack across both projects.
-- TP4056 on emitter is overkill-free — simple USB-C charge, no solar MPPT needed at this power level.
-  - Note: if adding solar to emitter, use a TP4056 variant with solar input protection or add a diode.
+### Emitter
+- Draw: ~45mA continuous (IR LED + power LED)
+- Worst case (3-day event, zero solar): 45mA × 9hr × 3 = 1215mAh
+- Battery spec: 2000mAh flat LiPo — covers worst case with 65% headroom
+- Solar (P123, 0.6W): ~120mA peak. Even at 30% cloud efficiency (~36mA) nearly nets to zero draw. Sunny day actively charges.
+- TP4056 charge controller — simple, cheap, handles USB-C + solar simultaneously via Schottky diode on solar input
+
+### Receiver
+- Draw: ~80-100mA average (ESP32 light sleep + LoRa activity)
+- Battery spec: 2000mAh flat LiPo — covers a full day, solar extends to multi-day
+- Solar (P124, 1.2W): ~200mA peak, net positive on sunny days
+- bq25185 charge controller — same BOM as Meshtastic outdoor node, handles solar MPPT properly
 
 ---
 
 ## CAD Notes (Onshape)
 
-Reference dimensions needed before modeling:
+### Known dimensions
+- TP4056 board: 25mm × 16.5mm (verify against specific board ordered)
+- Flat LiPo 2000mAh: ~60mm × 40mm × 7mm (verify when ordered)
+- Emitter panel (P123): 65.5 × 65.5 × 3.1mm — drives housing footprint
+- Receiver panel (P124): 66 × 113 × 2.6mm — drives housing footprint
+- ¼-20 threaded insert: verify OD for heat-set fit
+
+### Still needed
 - Heltec V3 / V4 PCB footprint and mounting hole pattern
 - bq25185 Adafruit board footprint
-- 18650 cell diameter (18.5mm) and length (65mm) — standard, but verify fit
-- TP4056 board footprint
-- ¼-20 threaded insert OD (press-fit or heat-set)
-- Solar panel dimensions (TBD based on panel selected)
 - SMA bulkhead cutout diameter
 
-Plan: measure physical parts when RAK/Adafruit order arrives, then model both housings. Emitter housing is simpler — good candidate for first print and fit-test.
+### Plan
+Emitter housing first — simpler, no Heltec/bq25185 measurements needed. Good first Onshape project to dial in tube alignment, tripod mount, and lid fit before tackling receiver complexity. Measure TP4056 board and LiPo in hand before modeling.
 
 ---
 
@@ -117,7 +177,6 @@ Plan: measure physical parts when RAK/Adafruit order arrives, then model both ho
 
 Before full custom design, check MakerWorld for:
 - Electronics enclosures with ¼-20 tripod mounts (photography accessory category)
-- 18650 battery holders / enclosures
 - TP4056 project boxes
 
-Likely still need custom design for the full integrated housing, but reference prints may help validate dimensions and fitment approach.
+Likely still need custom design for full integrated housing, but reference prints may help validate dimensions and fitment approach.
