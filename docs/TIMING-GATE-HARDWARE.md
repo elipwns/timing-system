@@ -23,54 +23,79 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 ---
 
-## Charge Controller — bq25185 (both housings)
+## Full BOM
 
-**Adafruit product ID**: 6106
-**URL**: https://www.adafruit.com/product/6106
-**Price**: $8.95 (volume breaks at 10+ and 100+)
+| Qty | Component | Source | Part # | Price | Notes |
+|---|---|---|---|---|---|
+| 5 | bq25185 5V Boost Charger | Adafruit | 6106 | $8.95 | 2x emitter, 2x receiver, 1x Meshtastic |
+| 2 | Voltaic P123 0.6W panel | Adafruit | 5856 | $8.95 | Emitter lid, 65.5×65.5mm square |
+| 2 | Voltaic P124 1.2W panel | Adafruit | 5368 | $14.95 | Receiver lid, 66×113mm rectangular |
+| 2 | IR Break Beam 5mm | Adafruit | 2168 | $5.95 | One set per gate, 2 gates total |
+| 8 | JLJLUP 2000mAh LiPo | Amazon | JLJLUP LP103450 | ~$6.00 | 5 deployed + 3 spares, PH 2.0mm connector |
 
-Used on both emitter and receiver. Standardized BOM across all solar node projects (timing gates + Meshtastic outdoor node).
-
-**Why bq25185 over TP4056:**
-- Proper solar + USB-C input handling simultaneously — no diode hack needed, no simultaneous charge/load problem
-- Near-MPPT solar optimization built in — adjusts current draw to keep panel at peak voltage
-- Power path to load — draws from charger first, remainder goes to battery. Battery isn't constantly cycling.
-- Regulated 5V boost output (TPS61023) — clean 5V to the load regardless of battery state
-- Three onboard status LEDs (charging, fault, 3.3V output)
-- JST PH 2-pin battery connector, terminal block output, USB-C input, DC/solar solder pads
-- Mounting holes
-
-**Connections:**
-- Solar panel → DC/solar solder pads (5-18V input, no external diode needed)
-- LiPo → JST PH 2-pin BATT port
-- USB-C → charging input (backup / overnight)
-- Load (IR LED or ESP32) → 5V terminal block output
+**Already on hand:**
+- Heltec V3 x2 (current timing nodes), Heltec V4 x2, HTIT-Tracker x1
+- Heat set inserts (¼-20)
+- Schottky diodes
+- Soldering iron, wire strippers, Dremel, multimeter, digital calipers
 
 ---
 
-## Solar Panels — Sourcing
+## Charge Controller — bq25185 (#6106)
 
-Both panels are from Voltaic Systems via Adafruit. ETFE coating — superior to epoxy or PET, IP67 waterproof, UV resistant, 5-7 year rated life, 22+% efficiency monocrystalline SunPower cells. 2-year warranty. Solder pads on back (no connector included).
+**URL**: https://www.adafruit.com/product/6106 — $8.95
 
-**Note on voltage:** Both panels are nominally 5V but output 6-6.1V at peak power point. The bq25185 accepts 5-18V solar input — both panels are well within range.
+Used on both emitter and receiver. Same board also used on Meshtastic outdoor node — fully standardized power stack across all solar projects.
 
-### Emitter panel — Voltaic P123
-- **Adafruit product ID**: 5856
-- **URL**: https://www.adafruit.com/product/5856
-- **Price**: $8.95
-- **Dimensions**: 65.5 x 65.5 x 3.1mm (square)
-- **Output**: 5V nominal, ~6V peak, 120mA peak, 0.6W
-- **Stock**: In stock (68 units as of March 2026)
-- **Why**: Square footprint drives a compact symmetric emitter housing. 0.6W is more than sufficient for ~45mA emitter draw. Visually distinct from receiver.
+**Key features for this use case:**
+- Solar + USB-C input simultaneously, no external diode needed
+- Near-MPPT solar optimization — adjusts draw to keep panel at peak voltage
+- Power path to load — draws from charger first, battery gets remainder. No constant charge/discharge cycling.
+- Regulated 5V boost output — clean 5V regardless of battery state
+- Three onboard LEDs: orange (charging), red (fault), green (3.3V good)
+- JST PH 2-pin battery port, screw terminal 5V output, USB-C input, solar solder pads
 
-### Receiver panel — Voltaic P124
-- **Adafruit product ID**: 5368
-- **URL**: https://www.adafruit.com/product/5368
-- **Price**: $14.95
-- **Dimensions**: 66 x 113 x 2.6mm (rectangular)
-- **Output**: 5V nominal, ~6.07V peak, 200mA peak, 1.2W
-- **Stock**: In stock (as of March 2026)
-- **Why**: Higher output suits ESP32 + LoRa draw (~80-100mA avg). Rectangular lid makes receiver housing immediately identifiable vs emitter. Antenna on side is the other visual differentiator.
+**Connections:**
+- Solar panel → VIN/G solder pads (5-18V, no diode needed)
+- LiPo → JST PH 2-pin BATT port
+- USB-C → onboard connector, backup/overnight charge
+- Load → 5V screw terminal output
+
+---
+
+## Battery — JLJLUP 2000mAh LiPo
+
+**Source**: Amazon — JLJLUP LP103450 4-pack ~$24
+**Dimensions**: 34 × 52 × 10mm
+**Connector**: JST PH 2.0mm (matches bq25185 natively)
+**Capacity**: 2000mAh @ 3.7V
+**Protection**: Built-in PCM (over/under charge, over current, short circuit)
+
+### Connector polarity — verify before first connect
+Most hobby LiPos including this one follow the Adafruit/JST standard: **red = positive, black = negative**. The bq25185 is wired to match. However polarity is not guaranteed universal across all manufacturers.
+
+**Before plugging in for the first time:**
+1. Probe bq25185 JST socket with multimeter — confirm which pin is positive
+2. Confirm red wire on battery = P+
+3. If reversed: pop pins from JST housing with a small flathead, swap them. 30 second fix, no soldering.
+
+---
+
+## Solar Panels
+
+Both from Voltaic Systems via Adafruit. ETFE coating, IP67, UV resistant, 5-7 year rated life, 22+% monocrystalline SunPower cells, 2-year warranty. Solder pads on back — solder wires directly, no connector included.
+
+**Voltage note:** Both panels output ~6-6.1V at peak. bq25185 accepts 5-18V solar input — both panels are well within spec. No voltage regulator needed.
+
+### Emitter panel — Voltaic P123 (#5856)
+- 65.5 × 65.5 × 3.1mm — square, drives compact emitter housing footprint
+- 0.6W, ~120mA peak — more than sufficient for ~45mA emitter draw
+- https://www.adafruit.com/product/5856
+
+### Receiver panel — Voltaic P124 (#5368)
+- 66 × 113 × 2.6mm — rectangular, drives longer receiver housing footprint
+- 1.2W, ~200mA peak — suits ESP32 + LoRa draw (~80-100mA avg)
+- https://www.adafruit.com/product/5368
 
 ### Voltaic lineup stock status (as of March 2026)
 | Panel | Status |
@@ -90,60 +115,64 @@ Both panels are from Voltaic Systems via Adafruit. ETFE coating — superior to 
 
 ---
 
+## IR Sensors — Adafruit Break Beam #2168
+
+**URL**: https://www.adafruit.com/product/2168 — $5.95/set
+**LED package**: 5mm diameter
+**Comes with**: pre-wired header ends on both emitter and receiver — wires run back into housing, no bare LED soldering needed
+
+One set per gate = 2 sets total for start + finish. 2 sets ordered (4 total) for spares.
+
+---
+
 ## Receiver Housing (Smart Side)
 
-This is the "brain" of each gate. One per gate (x2 total for start + finish).
+One per gate (x2 total).
 
 ### Electronics
-- **ESP32**: Heltec V3 or V4
-- **Charge controller**: Adafruit bq25185 (#6106)
-- **Battery**: flat LiPo, ~2000mAh, JST PH 2-pin connector
-- **Solar panel**: Voltaic P124, 66 x 113mm, rectangular lid face
-- **Sensor**: IR phototransistor, forward-facing through alignment tube
-- **Radio**: LoRa antenna — SMA bulkhead on enclosure side
+- Heltec V3 or V4 ESP32
+- bq25185 (#6106)
+- JLJLUP 2000mAh LiPo
+- Voltaic P124 panel (66×113mm lid)
+- IR phototransistor from break beam set, forward-facing through alignment tube
+- SMA bulkhead for LoRa antenna
 
-### Status LEDs
-- **Battery level**: driven from bq25185 status pins — charging (orange), fault (red), 3.3V output (green) onboard. Additional external LEDs for beam status if needed.
-- **Beam aligned**: lights up when phototransistor is actively receiving IR signal — primary alignment aid during event setup
-- **LoRa activity**: blinks on transmit from ESP32 GPIO
-
-### Behavior
-- Beam aligned LED makes setup fast — just rotate tripod until it goes green
-- On beam break: ESP32 fires LoRa message → hub node at timing table
-- Deep sleep between events to conserve power
-- Solar keeps it topped up all day; USB-C for overnight charging
+### Status indicators
+- bq25185 onboard LEDs: charging, fault, power good
+- **Beam aligned LED**: external LED on GPIO — lights when phototransistor sees IR beam. Primary setup aid — rotate tripod until it goes green.
+- **LoRa activity LED**: blinks on transmit
 
 ### Mechanical
-- ¼-20 threaded insert on bottom for tripod mount
-- Solar panel (66 x 113mm) as top lid face
-- IR phototransistor mounted in forward-facing tube (10-15mm) to narrow acceptance angle
-- SMA bulkhead on side for LoRa antenna
-- USB-C port accessible on side/bottom (bq25185 onboard connector)
-- Weatherproof — sealed enough for outdoor event use
+- ¼-20 heat set insert on bottom — tripod mount
+- Voltaic P124 (66×113mm) as top lid face
+- IR phototransistor in forward-facing 6mm ID alignment tube (10-15mm long)
+- SMA bulkhead on side
+- USB-C port accessible on side/bottom
+- Weatherproof
 
 ---
 
 ## Emitter Housing (Dumb Side)
 
-Just needs to blast IR light continuously. One per gate (x2 total).
+One per gate (x2 total).
 
 ### Electronics
-- **IR LED**: forward-facing 940nm, ~40mA continuous
-- **Current limiting resistor**: calculate based on 5V bq25185 output
-- **Charge controller**: Adafruit bq25185 (#6106) — same board as receiver, standardized BOM
-- **Battery**: flat LiPo ~2000mAh, JST PH 2-pin connector
-- **Solar panel**: Voltaic P123, 65.5 x 65.5mm, square lid face
+- bq25185 (#6106)
+- JLJLUP 2000mAh LiPo
+- Voltaic P123 panel (65.5×65.5mm lid)
+- IR LED from break beam set, forward-facing through alignment tube
+- Current limiting resistor (calculate for 5V supply, ~40mA target)
 
-### Status LEDs
-- **Power on / charging status**: bq25185 onboard LEDs visible or piped out
-- **Aim assist**: visible-light LED (red or green) mounted directly next to the IR LED — coarse visual aiming before IR alignment confirmed. IR is invisible; this makes setup fast.
+### Status indicators
+- bq25185 onboard LEDs visible through housing or piped out
+- **Aim assist LED**: visible red or green LED adjacent to IR LED on front face — coarse visual aiming before IR beam alignment confirmed
 
 ### Mechanical
-- ¼-20 threaded insert on bottom for tripod mount
-- Solar panel (65.5 x 65.5mm) as square top lid face
-- IR LED mounted in forward-facing alignment tube, same spec as receiver side
-- Aim assist LED adjacent to IR LED, same forward face
-- USB-C port accessible on side/bottom (bq25185 onboard connector)
+- ¼-20 heat set insert on bottom — tripod mount
+- Voltaic P123 (65.5×65.5mm) as square top lid face
+- IR LED in forward-facing 6mm ID alignment tube (10-15mm long)
+- Aim assist LED adjacent to tube on front face
+- USB-C port accessible on side/bottom
 - NO antenna — key visual differentiator from receiver
 - Weatherproof
 
@@ -151,56 +180,55 @@ Just needs to blast IR light continuously. One per gate (x2 total).
 
 ## Alignment Tube Spec
 
-A short tube (10-15mm length, ~8mm ID) around each IR element:
-- Narrows the beam/acceptance cone so alignment has to be deliberate
-- Reduces false triggers from ambient IR (sun, other lights)
-- Makes the "beam aligned" LED on the receiver more meaningful — it only lights when you're actually on axis
-- Same tube spec on both emitter and receiver for symmetry
+- **ID**: 6mm (5mm LED package + 1mm clearance)
+- **Length**: 10-15mm
+- Narrows beam/acceptance cone — alignment must be deliberate
+- Reduces false triggers from ambient IR (sun, stadium lights)
+- Same spec on both emitter and receiver for symmetry
+- Tube is printed as part of the housing front face
 
 ---
 
-## Power Notes
+## Power Budget
 
-### Both housings — standardized stack
-- **Charge controller**: bq25185 — solar + USB-C input, 5V boost output, power path management
-- **Battery**: flat LiPo ~2000mAh
-- **No external diodes needed** — bq25185 handles solar/USB-C priority internally
+### Emitter
+- Draw: ~45mA continuous (IR LED + LEDs) from 5V
+- Worst case 3-day, zero solar: 45mA × 9hr × 3 = 1215mAh
+- 2000mAh battery: 65% headroom over worst case
+- P123 solar at 30% cloud efficiency (~36mA): near net-zero draw
 
-### Emitter power budget
-- Draw: ~45mA continuous (IR LED + indicator LEDs) from 5V output
-- Worst case (3-day event, zero solar): 45mA × 9hr × 3 = 1215mAh
-- 2000mAh covers worst case with 65% headroom
-- Solar (P123, 0.6W, ~120mA peak): near net-zero even on cloudy days
-
-### Receiver power budget
-- Draw: ~80-100mA average (ESP32 light sleep + LoRa activity) from 5V output
-- 2000mAh covers a full event day solo; solar extends to multi-day no-charge
-- Solar (P124, 1.2W, ~200mA peak): net positive on sunny days
+### Receiver
+- Draw: ~80-100mA average (ESP32 + LoRa) from 5V
+- 2000mAh covers a full event day; solar extends to multi-day
+- P124 solar at peak (~200mA): net positive on sunny days
 
 ---
 
 ## CAD Notes (Onshape)
 
-### Known dimensions
-- bq25185 board: need to measure — check Adafruit product page for PCB dimensions
-- Flat LiPo 2000mAh: ~60mm × 40mm × 7mm (verify when ordered)
-- Emitter panel (P123): 65.5 × 65.5 × 3.1mm — drives emitter housing footprint
-- Receiver panel (P124): 66 × 113 × 2.6mm — drives receiver housing footprint
-- ¼-20 threaded insert: verify OD for heat-set fit
+### Confirmed dimensions
+| Component | Dimensions |
+|---|---|
+| bq25185 board | 32 × 26.3 × 7.2mm (from Adafruit listing) |
+| JLJLUP LiPo | 34 × 52 × 10mm (verify with calipers on arrival) |
+| IR LED/receiver package | 5mm diameter |
+| Alignment tube ID | 6mm |
+| Emitter panel (P123) | 65.5 × 65.5 × 3.1mm |
+| Receiver panel (P124) | 66 × 113 × 2.6mm |
+| Heat set insert OD | Measure with calipers before modeling |
 
 ### Still needed before receiver modeling
-- Heltec V3 / V4 PCB footprint and mounting hole pattern
+- Heltec V3/V4 PCB footprint and mounting hole pattern
 - SMA bulkhead cutout diameter
 
 ### Plan
-Emitter housing first — good first Onshape project, simpler internals, same bq25185 board as receiver so dimensions transfer. Measure bq25185 board and LiPo physically before modeling. Dial in tube alignment, tripod mount, and panel lid fit on emitter, then carry those lessons into receiver.
+Emitter housing first — simpler internals, no Heltec measurements needed. Verify all dimensions with calipers when parts arrive before starting sketch. Dial in tube, tripod mount, and panel lid fit on emitter, then carry those lessons to receiver.
 
 ---
 
 ## MakerWorld Search Notes
 
-Before full custom design, check MakerWorld for:
 - Electronics enclosures with ¼-20 tripod mounts (photography accessory category)
-- bq25185 project enclosures (Adafruit even sells a snap-on enclosure for this board: product #6126)
+- Adafruit sells a snap-on enclosure for bq25185: product #6126 — useful for dimension reference
 
-Likely still need custom design for full integrated housing, but reference prints may help validate dimensions and fitment approach.
+Full custom design likely needed for integrated housing, but reference prints help validate fitment.
