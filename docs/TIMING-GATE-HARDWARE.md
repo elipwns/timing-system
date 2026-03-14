@@ -1,25 +1,36 @@
 # Timing Gate Hardware Design Spec
 
-Self-contained, solar-powered IR beam break timing gates. Two gates total (start + finish), each gate consisting of two independent housings on tripods — one emitter side, one receiver side. No wires cross the track.
+Self-contained, solar-powered IR beam break timing gates. Two gates total (start + finish), each gate consisting of two independent housings on tripods — one emitter side, one receiver side. No wires cross the track. A separate hub/base station sits at the timing table and handles all data aggregation and cloud upload.
+
+---
+
+## Three Enclosure Types
+
+| Enclosure | Qty | Lives | Key constraint |
+|---|---|---|---|
+| **Emitter** | 2 | Field, tripod, weatherproof | Square solar lid, IR LED + aim assist, compact |
+| **Detector (receiver)** | 2 | Field, tripod, weatherproof | Rectangular solar lid, IR phototransistor, SMA antenna |
+| **Hub / base station** | 1 | Timing table, semi-protected | GPS, WiFi, environmental sensors, display — table-friendly form factor |
 
 ---
 
 ## Physical Setup
 
 ```
-[Emitter housing]                        [Receiver housing]
+[Emitter]                                [Detector]
   IR LED ──────────────────────────────→  Phototransistor
   (dumb, just needs power)                (smart, ESP32 + LoRa)
 
   ¼-20 tripod mount                       ¼-20 tripod mount
   weighted tripod on asphalt              weighted tripod on asphalt
+
+                    both fire LoRa → [Hub at timing table] → WiFi → AWS
 ```
 
-- Gate width: ~10-15 feet (start line width + clearance for sideways entry)
-- Each housing is self-contained: solar panel + LiPo, no cables between sides
-- Both housings point at each other — alignment is handled by rotating the tripod head
-- Short alignment tube around IR elements narrows acceptance angle, makes alignment positive and deliberate
-- Two distinct housing designs: emitter is compact/square (square panel), receiver is longer (rectangular panel + antenna). Immediately visually distinct at event setup.
+- Gate width: ~10-15 feet
+- Each field housing is self-contained: solar + LiPo, no cables across track
+- Both housings point at each other — alignment via tripod head rotation
+- Alignment tube on each narrows beam/acceptance cone
 
 ---
 
@@ -27,17 +38,18 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 | Qty | Component | Source | Part # | Price | Notes |
 |---|---|---|---|---|---|
-| 5 | bq25185 5V Boost Charger | Adafruit | 6106 | $8.95 | 2x emitter, 2x receiver, 1x Meshtastic |
+| 5 | bq25185 5V Boost Charger | Adafruit | 6106 | $8.95 | 2x emitter, 2x detector, 1x hub (if solar) |
 | 2 | Voltaic P123 0.6W panel | Adafruit | 5856 | $8.95 | Emitter lid, 65.5×65.5mm square |
-| 2 | Voltaic P124 1.2W panel | Adafruit | 5368 | $14.95 | Receiver lid, 66×113mm rectangular |
-| 2 | IR Break Beam 5mm | Adafruit | 2168 | $5.95 | One set per gate, 2 gates total |
-| 8 | JLJLUP 2000mAh LiPo | Amazon | JLJLUP LP103450 | ~$6.00 | 5 deployed + 3 spares, PH 2.0mm connector |
+| 2 | Voltaic P124 1.2W panel | Adafruit | 5368 | $14.95 | Detector lid, 66×113mm rectangular |
+| 2 | IR Break Beam 5mm | Adafruit | 2168 | $5.95 | One set per gate, 2 gates = 2 sets |
+| 8 | JLJLUP 2000mAh LiPo | Amazon | LP103450 | ~$6.00 | 5 deployed + 3 spares, JST PH 2.0mm |
 
 **Already on hand:**
-- Heltec V3 x2 (current timing nodes), Heltec V4 x2, HTIT-Tracker x1
-- Heat set inserts (¼-20)
-- Schottky diodes
+- Heltec V3 x2, Heltec V4 x2, HTIT-Tracker x1 (hub candidate)
+- Heat set inserts (¼-20), Schottky diodes
 - Soldering iron, wire strippers, Dremel, multimeter, digital calipers
+
+**Hub station sensors — to order (see hub section below)**
 
 ---
 
@@ -45,59 +57,50 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 **URL**: https://www.adafruit.com/product/6106 — $8.95
 
-Used on both emitter and receiver. Same board also used on Meshtastic outdoor node — fully standardized power stack across all solar projects.
+Standardized across all three enclosure types and Meshtastic outdoor node.
 
-**Key features for this use case:**
-- Solar + USB-C input simultaneously, no external diode needed
-- Near-MPPT solar optimization — adjusts draw to keep panel at peak voltage
-- Power path to load — draws from charger first, battery gets remainder. No constant charge/discharge cycling.
-- Regulated 5V boost output — clean 5V regardless of battery state
-- Three onboard LEDs: orange (charging), red (fault), green (3.3V good)
-- JST PH 2-pin battery port, screw terminal 5V output, USB-C input, solar solder pads
+**Key features:**
+- Solar + USB-C simultaneously, no external diode needed
+- Near-MPPT solar optimization
+- Power path — draws from charger first, battery gets remainder
+- Regulated 5V boost output regardless of battery state
+- Onboard LEDs: orange (charging), red (fault), green (3.3V good)
+- JST PH 2-pin battery, screw terminal 5V out, USB-C in, solar solder pads
 
 **Connections:**
-- Solar panel → VIN/G solder pads (5-18V, no diode needed)
-- LiPo → JST PH 2-pin BATT port
-- USB-C → onboard connector, backup/overnight charge
-- Load → 5V screw terminal output
+- Solar → VIN/G solder pads (5-18V)
+- LiPo → JST PH 2-pin BATT
+- Load → 5V screw terminal
 
 ---
 
 ## Battery — JLJLUP 2000mAh LiPo
 
-**Source**: Amazon — JLJLUP LP103450 4-pack ~$24
 **Dimensions**: 34 × 52 × 10mm
-**Connector**: JST PH 2.0mm (matches bq25185 natively)
-**Capacity**: 2000mAh @ 3.7V
-**Protection**: Built-in PCM (over/under charge, over current, short circuit)
+**Connector**: JST PH 2.0mm — matches bq25185 natively
+**Protection**: Built-in PCM
 
-### Connector polarity — verify before first connect
-Most hobby LiPos including this one follow the Adafruit/JST standard: **red = positive, black = negative**. The bq25185 is wired to match. However polarity is not guaranteed universal across all manufacturers.
-
-**Before plugging in for the first time:**
-1. Probe bq25185 JST socket with multimeter — confirm which pin is positive
-2. Confirm red wire on battery = P+
-3. If reversed: pop pins from JST housing with a small flathead, swap them. 30 second fix, no soldering.
+### Polarity — verify before first connect
+Standard convention: red = P+, black = P-. bq25185 is wired to match. Verify with multimeter before first plug-in. If reversed: pop JST pins with small flathead and swap — 30 second fix, no soldering.
 
 ---
 
 ## Solar Panels
 
-Both from Voltaic Systems via Adafruit. ETFE coating, IP67, UV resistant, 5-7 year rated life, 22+% monocrystalline SunPower cells, 2-year warranty. Solder pads on back — solder wires directly, no connector included.
-
-**Voltage note:** Both panels output ~6-6.1V at peak. bq25185 accepts 5-18V solar input — both panels are well within spec. No voltage regulator needed.
+ETFE, IP67, UV resistant, 5-7yr life, 22+% monocrystalline SunPower cells. Solder pads on back.
+Both output ~6-6.1V peak — bq25185 accepts 5-18V solar input, both are in spec.
 
 ### Emitter panel — Voltaic P123 (#5856)
-- 65.5 × 65.5 × 3.1mm — square, drives compact emitter housing footprint
-- 0.6W, ~120mA peak — more than sufficient for ~45mA emitter draw
+- 65.5 × 65.5 × 3.1mm — square
+- 0.6W, ~120mA peak
 - https://www.adafruit.com/product/5856
 
-### Receiver panel — Voltaic P124 (#5368)
-- 66 × 113 × 2.6mm — rectangular, drives longer receiver housing footprint
-- 1.2W, ~200mA peak — suits ESP32 + LoRa draw (~80-100mA avg)
+### Detector panel — Voltaic P124 (#5368)
+- 66 × 113 × 2.6mm — rectangular
+- 1.2W, ~200mA peak
 - https://www.adafruit.com/product/5368
 
-### Voltaic lineup stock status (as of March 2026)
+### Voltaic stock status (March 2026)
 | Panel | Status |
 |---|---|
 | Small 6V 1W | Out of stock |
@@ -106,7 +109,7 @@ Both from Voltaic Systems via Adafruit. ETFE coating, IP67, UV resistant, 5-7 ye
 | Huge 6V 6W | No longer stocked |
 | Colossal 6V 9W | Out of stock |
 | 2V 0.3W ETFE | $5.50 — in stock |
-| **5V 1.2W ETFE (P124)** | **$14.95 — in stock ✅ (receiver)** |
+| **5V 1.2W ETFE (P124)** | **$14.95 — in stock ✅ (detector)** |
 | 5V 0.3W ETFE | Out of stock |
 | **5V 0.6W ETFE (P123)** | **$8.95 — in stock ✅ (emitter)** |
 | 6V 2W ETFE | $20.95 — in stock |
@@ -118,89 +121,134 @@ Both from Voltaic Systems via Adafruit. ETFE coating, IP67, UV resistant, 5-7 ye
 ## IR Sensors — Adafruit Break Beam #2168
 
 **URL**: https://www.adafruit.com/product/2168 — $5.95/set
-**LED package**: 5mm diameter
-**Comes with**: pre-wired header ends on both emitter and receiver — wires run back into housing, no bare LED soldering needed
+**LED package**: 5mm diameter — sets alignment tube ID at 6mm
+**Pre-wired** with header ends — wires run back into housing
 
-One set per gate = 2 sets total for start + finish. 2 sets ordered (4 total) for spares.
+2 sets ordered (4 total) — 2 deployed, 2 spares.
 
 ---
 
-## Receiver Housing (Smart Side)
+## Enclosure 1 — Emitter Housing
 
-One per gate (x2 total).
+Two built (one per gate).
+
+### Electronics
+- bq25185 (#6106)
+- JLJLUP 2000mAh LiPo
+- Voltaic P123 (65.5×65.5mm lid)
+- IR LED from break beam set, through alignment tube
+- Current limiting resistor (5V supply, ~40mA target)
+
+### Status indicators
+- bq25185 onboard LEDs (charging, fault, power good)
+- Aim assist LED: visible red or green, adjacent to IR tube on front face
+
+### Mechanical
+- ¼-20 heat set insert, bottom — tripod mount
+- Voltaic P123 square panel as top lid
+- IR LED in 6mm ID × 10-15mm alignment tube, front face
+- Aim assist LED adjacent to tube
+- USB-C accessible on side/bottom
+- NO antenna
+- Weatherproof
+
+### Power budget
+- ~45mA continuous draw
+- Worst case 3-day, no solar: 1215mAh — 2000mAh covers with 65% headroom
+- P123 at 30% cloud efficiency: near net-zero
+
+---
+
+## Enclosure 2 — Detector Housing
+
+Two built (one per gate).
 
 ### Electronics
 - Heltec V3 or V4 ESP32
 - bq25185 (#6106)
 - JLJLUP 2000mAh LiPo
-- Voltaic P124 panel (66×113mm lid)
-- IR phototransistor from break beam set, forward-facing through alignment tube
+- Voltaic P124 (66×113mm lid)
+- IR phototransistor from break beam set, through alignment tube
 - SMA bulkhead for LoRa antenna
 
 ### Status indicators
-- bq25185 onboard LEDs: charging, fault, power good
-- **Beam aligned LED**: external LED on GPIO — lights when phototransistor sees IR beam. Primary setup aid — rotate tripod until it goes green.
-- **LoRa activity LED**: blinks on transmit
+- bq25185 onboard LEDs
+- Beam aligned LED: external LED on ESP32 GPIO — lights when phototransistor sees IR. Rotate tripod until green.
+- LoRa activity LED: blinks on transmit
 
 ### Mechanical
-- ¼-20 heat set insert on bottom — tripod mount
-- Voltaic P124 (66×113mm) as top lid face
-- IR phototransistor in forward-facing 6mm ID alignment tube (10-15mm long)
+- ¼-20 heat set insert, bottom — tripod mount
+- Voltaic P124 rectangular panel as top lid
+- IR phototransistor in 6mm ID × 10-15mm alignment tube, front face
 - SMA bulkhead on side
-- USB-C port accessible on side/bottom
+- USB-C accessible on side/bottom
 - Weatherproof
 
----
-
-## Emitter Housing (Dumb Side)
-
-One per gate (x2 total).
-
-### Electronics
-- bq25185 (#6106)
-- JLJLUP 2000mAh LiPo
-- Voltaic P123 panel (65.5×65.5mm lid)
-- IR LED from break beam set, forward-facing through alignment tube
-- Current limiting resistor (calculate for 5V supply, ~40mA target)
-
-### Status indicators
-- bq25185 onboard LEDs visible through housing or piped out
-- **Aim assist LED**: visible red or green LED adjacent to IR LED on front face — coarse visual aiming before IR beam alignment confirmed
-
-### Mechanical
-- ¼-20 heat set insert on bottom — tripod mount
-- Voltaic P123 (65.5×65.5mm) as square top lid face
-- IR LED in forward-facing 6mm ID alignment tube (10-15mm long)
-- Aim assist LED adjacent to tube on front face
-- USB-C port accessible on side/bottom
-- NO antenna — key visual differentiator from receiver
-- Weatherproof
-
----
-
-## Alignment Tube Spec
-
-- **ID**: 6mm (5mm LED package + 1mm clearance)
-- **Length**: 10-15mm
-- Narrows beam/acceptance cone — alignment must be deliberate
-- Reduces false triggers from ambient IR (sun, stadium lights)
-- Same spec on both emitter and receiver for symmetry
-- Tube is printed as part of the housing front face
-
----
-
-## Power Budget
-
-### Emitter
-- Draw: ~45mA continuous (IR LED + LEDs) from 5V
-- Worst case 3-day, zero solar: 45mA × 9hr × 3 = 1215mAh
-- 2000mAh battery: 65% headroom over worst case
-- P123 solar at 30% cloud efficiency (~36mA): near net-zero draw
-
-### Receiver
-- Draw: ~80-100mA average (ESP32 + LoRa) from 5V
+### Power budget
+- ~80-100mA average draw
 - 2000mAh covers a full event day; solar extends to multi-day
-- P124 solar at peak (~200mA): net positive on sunny days
+- P124 at peak (~200mA): net positive on sunny days
+
+---
+
+## Enclosure 3 — Hub / Base Station
+
+One built. Lives at the timing table — not a field node. Form factor is table-friendly rather than weatherproof-tripod. Can be more open/accessible since it's in a semi-protected environment (tent, trailer, table).
+
+### Board — HTIT-Tracker
+Already on hand. Purpose-built for this role:
+- Built-in GPS/GNSS — single clock source for all received LoRa timestamps. No clock sync needed across nodes.
+- WiFi — posts to AWS from wherever the timing table is
+- LoRa — receives BEAM messages from all detector nodes
+- Display — shows live timing data at the table
+- Dual purpose: hub for timing events, or in-car telemetry node for track days (different firmware)
+
+### Hub role
+Receives `BEAM:checkpoint_id:local_millis` from each detector over LoRa, applies GPS-derived timestamp, calculates sector times, posts to AWS. Replaces the current FINISH node's double-duty role as sensor + uploader.
+
+### Power
+- USB power bank or laptop USB at the table — simplest option
+- Or bq25185 + LiPo + small solar panel for full independence (5th bq25185 in the order covers this)
+- Decision deferred until enclosure is designed
+
+### Environmental sensors — wishlist
+
+The hub station is the natural home for environmental logging. Every run gets correlated with conditions at time of run — stored alongside timing data in DynamoDB.
+
+**Priority 1 — unique data nobody else captures:**
+- **MLX90614** IR thermometer — asphalt surface temperature. Point at the track surface. Surface temp is the single biggest variable in autocross times and no commercial system tracks it. Over time enables separating driver improvement from track condition improvement.
+
+**Priority 2 — standard environmental context:**
+- **BME280** or **BME680** — ambient air temp, humidity, barometric pressure → density altitude calculation. Density altitude directly affects engine power output and therefore times.
+
+**Priority 3 — nice to have:**
+- Anemometer — wind speed/direction. More relevant for open hillclimb courses than tight autocross layouts.
+- Run number / time of day proxy for rubber laid down — already available from the timing data itself, no extra sensor needed.
+
+All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C breakout.
+
+### What environmental correlation enables
+- "You ran a 40.2 here last May — asphalt was 28°C. Today it's 38°C and your time is 40.8. The track is slower, not you."
+- Class-wide trend analysis — is NS1 getting faster as a class, or just running in better conditions?
+- Separating driver improvement from equipment and conditions improvement
+- Data nobody in amateur motorsport is currently capturing systematically
+
+### Enclosure design notes
+- Not a weatherproof field box — more of a station/instrument enclosure
+- Needs to sit stably on a table or clip to a trailer edge
+- Sensor ports: MLX90614 needs line-of-sight to asphalt (downward-facing port or external cable)
+- Display should be visible from operator position
+- USB-C or barrel jack power input accessible
+- Design deferred until HTIT-Tracker dimensions are measured and sensor selection is finalized
+
+---
+
+## Alignment Tube Spec (field nodes only)
+
+- ID: 6mm (5mm LED package + 1mm clearance)
+- Length: 10-15mm
+- Printed as part of housing front face
+- Same spec on emitter and detector for symmetry
 
 ---
 
@@ -209,26 +257,28 @@ One per gate (x2 total).
 ### Confirmed dimensions
 | Component | Dimensions |
 |---|---|
-| bq25185 board | 32 × 26.3 × 7.2mm (from Adafruit listing) |
-| JLJLUP LiPo | 34 × 52 × 10mm (verify with calipers on arrival) |
+| bq25185 board | 32 × 26.3 × 7.2mm |
+| JLJLUP LiPo | 34 × 52 × 10mm (verify with calipers) |
 | IR LED/receiver package | 5mm diameter |
 | Alignment tube ID | 6mm |
 | Emitter panel (P123) | 65.5 × 65.5 × 3.1mm |
-| Receiver panel (P124) | 66 × 113 × 2.6mm |
-| Heat set insert OD | Measure with calipers before modeling |
+| Detector panel (P124) | 66 × 113 × 2.6mm |
+| Heat set insert OD | Measure with calipers |
 
-### Still needed before receiver modeling
-- Heltec V3/V4 PCB footprint and mounting hole pattern
-- SMA bulkhead cutout diameter
+### Still needed
+- Heltec V3/V4 PCB footprint + mounting holes (detector)
+- SMA bulkhead cutout diameter (detector)
+- HTIT-Tracker dimensions (hub)
+- MLX90614 and BME280 board dimensions (hub)
 
-### Plan
-Emitter housing first — simpler internals, no Heltec measurements needed. Verify all dimensions with calipers when parts arrive before starting sketch. Dial in tube, tripod mount, and panel lid fit on emitter, then carry those lessons to receiver.
+### Build order
+1. **Emitter first** — simplest internals, best first Onshape project. Dial in panel lid, tripod mount, and tube geometry.
+2. **Detector second** — carries emitter lessons forward, adds Heltec fitment and antenna bulkhead.
+3. **Hub last** — most complex, most deferred. Design after sensor selection finalized.
 
 ---
 
 ## MakerWorld Search Notes
 
 - Electronics enclosures with ¼-20 tripod mounts (photography accessory category)
-- Adafruit sells a snap-on enclosure for bq25185: product #6126 — useful for dimension reference
-
-Full custom design likely needed for integrated housing, but reference prints help validate fitment.
+- Adafruit snap-on enclosure for bq25185: product #6126 — useful dimension reference
