@@ -254,22 +254,34 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 
 ## CAD Notes (Onshape)
 
-### Confirmed dimensions
-| Component | Dimensions |
-|---|---|
-| bq25185 board | 32 × 26.3 × 7.2mm |
-| JLJLUP LiPo | 34 × 52 × 10mm (verify with calipers) |
-| IR LED/receiver package | 5mm diameter |
-| Alignment tube ID | 6mm |
-| Emitter panel (P123) | 65.5 × 65.5 × 3.1mm |
-| Detector panel (P124) | 66 × 113 × 2.6mm |
-| Heat set insert OD | Measure with calipers |
+### ⚠️ Parts Verification Rule
+**Do not finalize any enclosure dimensions in Onshape until parts are physically in hand and measured with calipers.**
 
-### Still needed
-- Heltec V3/V4 PCB footprint + mounting holes (detector)
-- SMA bulkhead cutout diameter (detector)
-- HTIT-Tracker dimensions (hub)
-- MLX90614 and BME280 board dimensions (hub)
+Datasheet and product page dimensions are a starting point only — real parts vary. Every component marked 🔲 below must be caliper-verified before the corresponding enclosure is locked in CAD.
+
+The lesson from the Meshtastic build: design around what you can measure, not what the spec sheet says.
+
+### Confirmed dimensions (caliper-verified ✅)
+| Component | Dimensions | Status |
+|---|---|---|
+| Micro mini slide switch | 8.64 × 3.74 × 3.60mm body, 1.5mm actuator, ~2mm travel | ✅ measured |
+| Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
+| IR LED/receiver package | 5mm diameter | ✅ per Adafruit spec — verify on arrival |
+| Alignment tube ID | 6mm | ✅ derived from LED diameter |
+
+### From datasheets / spec pages — verify on arrival 🔲
+| Component | Spec dimensions | Needed for |
+|---|---|---|
+| bq25185 board | 32 × 26.3 × 7.2mm | Emitter + Detector CAD |
+| JLJLUP LiPo | 34 × 52 × 10mm | Emitter + Detector CAD |
+| Voltaic P123 panel | 65.5 × 65.5 × 3.1mm | Emitter lid design |
+| Voltaic P124 panel | 66 × 113 × 2.6mm | Detector lid design |
+| Heat set insert OD | TBD | Bottom tripod boss |
+| Heltec V3/V4 PCB | TBD | Detector CAD |
+| SMA bulkhead cutout | TBD | Detector CAD |
+| HTIT-Tracker dimensions | TBD | Hub CAD |
+| MLX90614 board | TBD | Hub CAD |
+| BME280 board | TBD | Hub CAD |
 
 ### Build order
 1. **Emitter first** — simplest internals, best first Onshape project. Dial in panel lid, tripod mount, and tube geometry.
