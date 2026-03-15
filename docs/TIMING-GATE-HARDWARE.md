@@ -48,6 +48,8 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 - Heltec V3 x2, Heltec V4 x2, HTIT-Tracker x1 (hub candidate)
 - Heat set inserts (¼-20), Schottky diodes
 - Soldering iron, wire strippers, Dremel, multimeter, digital calipers
+- 3000mAh LiPo batteries (Amazon, caliper-verified — see below)
+- Double-sided tape pads (caliper-verified — see below)
 
 **Hub station sensors — to order (see hub section below)**
 
@@ -74,14 +76,28 @@ Standardized across all three enclosure types and Meshtastic outdoor node.
 
 ---
 
-## Battery — JLJLUP 2000mAh LiPo
+## Battery — JLJLUP 2000mAh LiPo (ordered)
 
-**Dimensions**: 34 × 52 × 10mm
+**Dimensions**: 34 × 52 × 10mm (spec — verify on arrival 🔲)
 **Connector**: JST PH 2.0mm — matches bq25185 natively
 **Protection**: Built-in PCM
 
 ### Polarity — verify before first connect
 Standard convention: red = P+, black = P-. bq25185 is wired to match. Verify with multimeter before first plug-in. If reversed: pop JST pins with small flathead and swap — 30 second fix, no soldering.
+
+---
+
+## Battery — 3000mAh LiPo (on hand) ✅
+
+**Dimensions**: 10.3 × 36 × 66mm (caliper-verified)
+**Note**: 66mm length exceeds the 65.5mm P123 panel footprint by 0.5mm — this battery cannot lay flat inside the emitter enclosure without the enclosure growing slightly or the battery being oriented differently. Orient with the 36mm dimension across the short axis. Confirm connector type and polarity before use with bq25185.
+
+---
+
+## Double-Sided Tape Pads (on hand) ✅
+
+**Dimensions**: 2.3 × 11.7 × 11.7mm (caliper-verified)
+For component mounting inside enclosures — bq25185 board, battery securing, etc.
 
 ---
 
@@ -134,7 +150,7 @@ Two built (one per gate).
 
 ### Electronics
 - bq25185 (#6106)
-- JLJLUP 2000mAh LiPo
+- LiPo battery (see battery section — confirm which battery fits chosen enclosure footprint)
 - Voltaic P123 (65.5×65.5mm lid)
 - IR LED from break beam set, through alignment tube
 - Current limiting resistor (5V supply, ~40mA target)
@@ -145,10 +161,12 @@ Two built (one per gate).
 
 ### Mechanical
 - ¼-20 heat set insert, bottom — tripod mount
-- Voltaic P123 square panel as top lid
+- Voltaic P123 square panel as top lid (recessed in printed lid tray, lip retains panel)
 - IR LED in 6mm ID × 10-15mm alignment tube, front face
 - Aim assist LED adjacent to tube
 - USB-C accessible on side/bottom
+- TPU printed gasket between lid and body (2×2mm cross section, 1mm registration groove)
+- M3 heat set inserts × 4 corners, M3 screws lid to body
 - NO antenna
 - Weatherproof
 
@@ -182,6 +200,8 @@ Two built (one per gate).
 - IR phototransistor in 6mm ID × 10-15mm alignment tube, front face
 - SMA bulkhead on side
 - USB-C accessible on side/bottom
+- TPU printed gasket between lid and body
+- M3 heat set inserts × 4 corners, M3 screws lid to body
 - Weatherproof
 
 ### Power budget
@@ -266,14 +286,16 @@ The lesson from the Meshtastic build: design around what you can measure, not wh
 |---|---|---|
 | Micro mini slide switch | 8.64 × 3.74 × 3.60mm body, 1.5mm actuator, ~2mm travel | ✅ measured |
 | Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
-| IR LED/receiver package | 5mm diameter | ✅ per Adafruit spec — verify on arrival |
-| Alignment tube ID | 6mm | ✅ derived from LED diameter |
+| 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm | ✅ measured — note 66mm exceeds P123 footprint |
+| Double-sided tape pads | 2.3 × 11.7 × 11.7mm | ✅ measured |
+| IR LED/receiver package | 5mm diameter | per Adafruit spec — verify on arrival 🔲 |
+| Alignment tube ID | 6mm | derived from LED diameter |
 
 ### From datasheets / spec pages — verify on arrival 🔲
 | Component | Spec dimensions | Needed for |
 |---|---|---|
 | bq25185 board | 32 × 26.3 × 7.2mm | Emitter + Detector CAD |
-| JLJLUP LiPo | 34 × 52 × 10mm | Emitter + Detector CAD |
+| JLJLUP 2000mAh LiPo | 34 × 52 × 10mm | Emitter + Detector CAD |
 | Voltaic P123 panel | 65.5 × 65.5 × 3.1mm | Emitter lid design |
 | Voltaic P124 panel | 66 × 113 × 2.6mm | Detector lid design |
 | Heat set insert OD | TBD | Bottom tripod boss |
