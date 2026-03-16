@@ -4,6 +4,84 @@ Ideas that are too big or too speculative for the README checklist, but worth pr
 
 ---
 
+## 🚨 BLOCKER — IR Sensor Selection
+
+**This must be resolved before enclosure CAD can be finalized.**
+
+### The problem
+
+The originally specified Adafruit Break Beam Sensor (product #2168) has a maximum sensing distance of **50cm / 20 inches**. The timing gate needs to span **10-15 feet**. This is a fundamental incompatibility — the sensor selection needs to change.
+
+### Use case requirements
+
+| Requirement | Detail |
+|---|---|
+| **Range** | 10-15 feet minimum (autocross lane width) |
+| **Alignment tolerance** | Must tolerate imperfect setup — hillclimb courses on slopes, uneven ground, fast deployment by one person |
+| **Outdoor** | Full sun, rain, dust |
+| **Response time** | <10ms — cars are fast |
+| **Power** | 5V preferred (matches bq25185 output) or 12V with regulator |
+| **Output** | GPIO-compatible signal or relay contact (into ESP32 interrupt) |
+
+### Alignment tolerance is critical
+
+Autocross on flat pavement — easy, time to align carefully. Hillclimb on a road — slope, limited space, faster setup, may not be able to get tripods perfectly level. The sensor needs enough acceptance angle or beam width to tolerate a few degrees of misalignment without losing the beam.
+
+### Options to evaluate
+
+**Option 1 — Gate opener photocell (e.g. TOPENS TC102)**
+- Range: 10-46 feet ✅
+- Outdoor rated, weather resistant ✅
+- Lensed optics — decent alignment tolerance ✅
+- Built-in alignment LED on receiver ✅
+- Power: 12-24V AC/DC — needs regulator from 5V bq25185 ⚠️
+- Output: relay contact (NO/NC) — needs wiring to ESP32 GPIO ⚠️
+- Cost: ~$15-20/pair
+- Pro: purpose-built for exactly this use case, proven, cheap
+- Con: not a direct GPIO sensor, relay adds complexity
+
+**Option 2 — Industrial modulated IR pair (38kHz)**
+- Range: up to 7-10 meters with lensed emitter ✅
+- Modulated carrier rejects ambient IR noise (sunlight) ✅
+- More DIY — requires driver circuit for emitter ⚠️
+- TSSP4038 or similar receiver IC
+- Better GPIO integration than relay
+- Cost: ~$5-10 in parts
+
+**Option 3 — Laser diode + photodiode**
+- Range: effectively unlimited ✅
+- Very precise, narrow beam
+- Alignment is hardest — least forgiving ❌ (bad for hillclimb)
+- Visible laser makes alignment easier
+- Safety considerations for event use ⚠️
+
+**Option 4 — Retroreflective sensor**
+- Single housing, beam bounces off reflector on opposite side
+- Only one side needs power — simpler wiring
+- Range typically shorter than through-beam
+- Reflector still needs alignment
+- Good for narrow courses
+
+### Recommended path
+
+**Start with gate opener photocells (Option 1)** for a working v1 — proven range, proven outdoor use, cheap, alignment indicator built in. Wire relay output to ESP32 GPIO interrupt. Accept the 12V power requirement and use a small buck converter from the 5V bq25185 output... or more simply power the photocell from a separate 12V source and keep the ESP32 on 5V.
+
+**Evaluate modulated IR (Option 2) for v2** — cleaner integration, no relay, more control over beam angle and acceptance cone. Better long-term solution once v1 is proven.
+
+### Impact on enclosure design
+
+The enclosure design started around a 5mm LED through a 6mm tube. Gate opener photocells are self-contained units with their own housing — they would mount externally on the enclosure or on the tripod head directly, not inside the printed enclosure at all. This significantly changes the emitter/detector enclosure design:
+
+- Emitter enclosure becomes: **bq25185 + battery + solar + power switch** — power supply box only
+- The photocell sensor mounts on the outside, wired to the power box
+- The detector enclosure becomes: **ESP32 + bq25185 + battery + solar + relay interface** — with photocell receiver mounted externally
+
+This is actually simpler than trying to build optical alignment into the printed housing.
+
+**CAD work can continue on the enclosure body geometry** (walls, gasket, lid, tripod mount) since that's material-independent. Hold off on the IR tube / LED hole features until sensor selection is confirmed.
+
+---
+
 ## 🏗️ Hub-and-Spoke Architecture (Next Major Refactor)
 
 **The core idea:** Separate sensor nodes from the cloud uploader. Every checkpoint node is dumb and cheap — it only needs to detect a beam break and fire a LoRa message. One central "hub" node at the timing table receives all messages, does the math, and posts to AWS.
