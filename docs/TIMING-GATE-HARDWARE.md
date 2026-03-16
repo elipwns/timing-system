@@ -34,6 +34,20 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 ---
 
+## Shopping List — To Order
+
+Items needed before CAD can be finalized or final prints made. Measure everything with calipers on arrival before updating CAD.
+
+| Item | Purpose | Notes |
+|---|---|---|
+| **¼-20 heat set inserts** | Tripod mount boss in enclosure bottom | Need OD to design boss. Standard brass, M6 length. Search "¼-20 heat set insert brass" on Amazon. |
+| **ASA filament** | Final field enclosure prints | UV stable, high heat tolerance. Bambu ASA recommended for compatibility. 1-2 spools. |
+| **TPU filament** | Gaskets for all enclosures | 95A Shore hardness. Bambu TPU 95A recommended. |
+| **Waterproof USB-C panel mount connector** | USB-C access port on enclosure side | Need ~12-14mm cutout diameter. Search "waterproof USB-C panel mount" — measure OD before designing cutout. On-hand connector is 26mm, too large. |
+| **M3 screws** | Lid to body fastening | Flat or button head, length TBD once lid thickness is finalized. ~8-12mm likely. |
+
+---
+
 ## Full BOM
 
 | Qty | Component | Source | Part # | Price | Notes |
@@ -46,15 +60,12 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 **Already on hand:**
 - Heltec V3 x2, Heltec V4 x2, HTIT-Tracker x1 (hub candidate)
-- Heat set inserts (¼-20 and M3, caliper-verified — see CAD Notes)
+- M3 heat set inserts (caliper-verified OD 4.53mm)
 - Schottky diodes
 - Soldering iron, wire strippers, Dremel, multimeter, digital calipers
 - 3000mAh LiPo batteries (Amazon, caliper-verified — see below)
 - Double-sided tape pads (caliper-verified — see below)
-
-**To order:**
-- ASA filament — final material for all outdoor field enclosures (emitter, detector). UV stable, high heat tolerance. ABS on hand will be used up on current project first.
-- TPU filament — gaskets
+- Waterproof USB connector (26mm OD — too large for this enclosure, reserved for other project)
 
 **Hub station sensors — to order (see hub section below)**
 
@@ -95,7 +106,7 @@ Standard convention: red = P+, black = P-. bq25185 is wired to match. Verify wit
 ## Battery — 3000mAh LiPo (on hand) ✅
 
 **Dimensions**: 10.3 × 36 × 66mm (caliper-verified)
-**Note**: 66mm length exceeds the 65.5mm P123 panel footprint by 0.5mm — this battery cannot lay flat inside the emitter enclosure without the enclosure growing slightly or the battery being oriented differently. Reserved for detector or Meshtastic node. Emitter will use JLJLUP 2000mAh when it arrives.
+**Note**: Reserved for detector or Meshtastic node. Emitter will use JLJLUP 2000mAh when it arrives.
 
 ---
 
@@ -134,7 +145,7 @@ Both output ~6-6.1V peak — bq25185 accepts 5-18V solar input, both are in spec
 | 5V 0.3W ETFE | Out of stock |
 | **5V 0.6W ETFE (P123)** | **$8.95 — in stock ✅ (emitter)** |
 | 6V 2W ETFE | $20.95 — in stock |
-| 5V 5W ETFE | $34.95 — in stock |
+| 5V 5W ETGE | $34.95 — in stock |
 | 5V 10W ETFE | $64.95 — in stock |
 
 ---
@@ -165,21 +176,23 @@ Two built (one per gate).
 - Aim assist LED: visible red or green, adjacent to IR tube on front face
 
 ### Mechanical
-- ¼-20 heat set insert, bottom — tripod mount
+- ¼-20 heat set insert, bottom — tripod mount (insert on order)
 - Voltaic P123 square panel as top lid (recessed in printed lid tray, lip retains panel)
 - IR LED in 6mm ID × 10-15mm alignment tube, front face
 - Aim assist LED adjacent to tube
-- USB-C accessible on side/bottom
+- Waterproof USB-C panel mount on side (connector on order — measure OD before designing cutout)
 - TPU printed gasket between lid and body (2×2mm cross section, 1mm registration groove)
-- M3 heat set inserts × 4 corners, M3 screws lid to body
+- M3 heat set inserts × 4 corners outside gasket line, M3 screws lid to body
 - 5mm exterior corner fillets
 - NO antenna
 - Weatherproof
 
 ### TODO before final print
-- [ ] **Thicken boss cylinder walls** — increase boss OD from 8mm to 10mm. Current 8mm OD causes wall bowing when inserting heat set inserts even at correct temp (230°C). More material needed around insert hole.
-- [ ] **Gusseted standoffs** — triangular bracing fins at base of each boss cylinder. Flagged by collaborator. Prevents torque load from cracking boss at floor joint.
-- [ ] **Tongue clearance** — reduce tongue width from 2mm to 1.6mm (offset 1.7mm + 1.6mm). Current tongue too tight in channel, lid hard to remove.
+- [ ] **Waterproof USB-C cutout** — waiting on correct connector (12-14mm panel mount). Design cutout after measuring part.
+- [ ] **¼-20 tripod boss** — waiting on ¼-20 inserts. Design boss after measuring OD.
+- [ ] **Switch pocket** — add to side wall using verified geometry from switch-pocket-test
+- [ ] **IR LED alignment tube** — 6mm ID × 10-15mm through front face wall
+- [ ] **Aim assist LED hole** — adjacent to alignment tube, front face
 
 ### Power budget
 - ~45mA continuous draw
@@ -206,19 +219,14 @@ Two built (one per gate).
 - LoRa activity LED: blinks on transmit
 
 ### Mechanical
-- ¼-20 heat set insert, bottom — tripod mount
+- ¼-20 heat set insert, bottom — tripod mount (insert on order)
 - Voltaic P124 rectangular panel as top lid
 - IR phototransistor in 6mm ID × 10-15mm alignment tube, front face
 - SMA bulkhead on side
-- USB-C accessible on side/bottom
+- Waterproof USB-C panel mount on side (connector on order)
 - TPU printed gasket between lid and body
-- M3 heat set inserts × 4 corners, M3 screws lid to body
+- M3 heat set inserts × 4 corners outside gasket line, M3 screws lid to body
 - Weatherproof
-
-### TODO before final print
-- [ ] **Thicken boss cylinder walls** — same issue as emitter, increase OD to 10mm
-- [ ] **Gusseted standoffs** — same as emitter
-- [ ] **Tongue clearance** — same fix as emitter lid
 
 ### Power budget
 - ~80-100mA average draw
@@ -229,53 +237,25 @@ Two built (one per gate).
 
 ## Enclosure 3 — Hub / Base Station
 
-One built. Lives at the timing table — not a field node. Form factor is table-friendly rather than weatherproof-tripod. Can be more open/accessible since it's in a semi-protected environment (tent, trailer, table).
+One built. Lives at the timing table — not a field node. Form factor is table-friendly rather than weatherproof-tripod.
 
 ### Board — HTIT-Tracker
 Already on hand. Purpose-built for this role:
-- Built-in GPS/GNSS — single clock source for all received LoRa timestamps. No clock sync needed across nodes.
+- Built-in GPS/GNSS — single clock source for all received LoRa timestamps
 - WiFi — posts to AWS from wherever the timing table is
 - LoRa — receives BEAM messages from all detector nodes
 - Display — shows live timing data at the table
-- Dual purpose: hub for timing events, or in-car telemetry node for track days (different firmware)
-
-### Hub role
-Receives `BEAM:checkpoint_id:local_millis` from each detector over LoRa, applies GPS-derived timestamp, calculates sector times, posts to AWS. Replaces the current FINISH node's double-duty role as sensor + uploader.
-
-### Power
-- USB power bank or laptop USB at the table — simplest option
-- Or bq25185 + LiPo + small solar panel for full independence (5th bq25185 in the order covers this)
-- Decision deferred until enclosure is designed
 
 ### Environmental sensors — wishlist
 
-The hub station is the natural home for environmental logging. Every run gets correlated with conditions at time of run — stored alongside timing data in DynamoDB.
+**Priority 1:** MLX90614 IR thermometer — asphalt surface temperature
+**Priority 2:** BME280/BME680 — ambient temp, humidity, barometric pressure → density altitude
+**Priority 3:** Anemometer — wind speed/direction
 
-**Priority 1 — unique data nobody else captures:**
-- **MLX90614** IR thermometer — asphalt surface temperature. Point at the track surface. Surface temp is the single biggest variable in autocross times and no commercial system tracks it. Over time enables separating driver improvement from track condition improvement.
-
-**Priority 2 — standard environmental context:**
-- **BME280** or **BME680** — ambient air temp, humidity, barometric pressure → density altitude calculation. Density altitude directly affects engine power output and therefore times.
-
-**Priority 3 — nice to have:**
-- Anemometer — wind speed/direction. More relevant for open hillclimb courses than tight autocross layouts.
-- Run number / time of day proxy for rubber laid down — already available from the timing data itself, no extra sensor needed.
-
-All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C breakout.
-
-### What environmental correlation enables
-- "You ran a 40.2 here last May — asphalt was 28°C. Today it's 38°C and your time is 40.8. The track is slower, not you."
-- Class-wide trend analysis — is NS1 getting faster as a class, or just running in better conditions?
-- Separating driver improvement from equipment and conditions improvement
-- Data nobody in amateur motorsport is currently capturing systematically
+All sensors are I2C — daisy chain off HTIT-Tracker I2C breakout.
 
 ### Enclosure design notes
-- Not a weatherproof field box — more of a station/instrument enclosure
-- Needs to sit stably on a table or clip to a trailer edge
-- Sensor ports: MLX90614 needs line-of-sight to asphalt (downward-facing port or external cable)
-- Display should be visible from operator position
-- USB-C or barrel jack power input accessible
-- Design deferred until HTIT-Tracker dimensions are measured and sensor selection is finalized
+- Deferred until HTIT-Tracker dimensions are measured and sensor selection is finalized
 
 ---
 
@@ -295,6 +275,7 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 - Iron temp: 230°C for PETG — do NOT use 420°C (causes wall bowing)
 - Use dedicated flat-bottom heat set tip, not soldering tip
 - Let heat do the work — slow 5-8 second sink, no hard pressure
+- ¼-20 insert OD: TBD — on order, measure before designing tripod boss
 
 ---
 
@@ -304,8 +285,8 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 |---|---|---|
 | Test/geometry prints | PLA | Fast, cheap, good enough for fitment checks |
 | Intermediate tests | PETG | Real material behavior, insert fitment validation |
-| Final field enclosures | ASA | UV stable, high heat tolerance (~95°C), outdoor rated — order when ready |
-| Gaskets | TPU | Flexible, compressible, UV stable, reusable |
+| Final field enclosures | ASA | UV stable, high heat tolerance (~95°C), outdoor rated — on order |
+| Gaskets | TPU | Flexible, compressible, UV stable, reusable — on order |
 | ABS on hand | Burn through on current project wrapping up | Not ideal for outdoor UV exposure long term |
 
 ---
@@ -315,10 +296,6 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 ### ⚠️ Parts Verification Rule
 **Do not finalize any enclosure dimensions in Onshape until parts are physically in hand and measured with calipers.**
 
-Datasheet and product page dimensions are a starting point only — real parts vary. Every component marked 🔲 below must be caliper-verified before the corresponding enclosure is locked in CAD.
-
-The lesson from the Meshtastic build: design around what you can measure, not what the spec sheet says.
-
 ### Confirmed dimensions (caliper-verified ✅)
 | Component | Dimensions | Notes |
 |---|---|---|
@@ -326,7 +303,7 @@ The lesson from the Meshtastic build: design around what you can measure, not wh
 | Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
 | 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm | ✅ reserved for detector/Meshtastic |
 | Double-sided tape pads | 2.3 × 11.7 × 11.7mm | ✅ |
-| M3 heat set insert OD | 4.53mm | ✅ — print hole 4.3mm, boss OD needs increase to 10mm |
+| M3 heat set insert OD | 4.53mm | ✅ — print hole 4.3mm, corner block 12×12mm |
 | IR LED/receiver package | 5mm diameter | per Adafruit spec — verify on arrival 🔲 |
 | Alignment tube ID | 6mm | derived from LED diameter |
 
@@ -337,17 +314,26 @@ The lesson from the Meshtastic build: design around what you can measure, not wh
 | JLJLUP 2000mAh LiPo | 34 × 52 × 10mm | Emitter + Detector CAD |
 | Voltaic P123 panel | 65.5 × 65.5 × 3.1mm | Emitter lid design |
 | Voltaic P124 panel | 66 × 113 × 2.6mm | Detector lid design |
-| ¼-20 heat set insert OD | TBD | Bottom tripod boss |
+| ¼-20 heat set insert OD | TBD — on order | Bottom tripod boss |
+| Waterproof USB-C panel mount OD | TBD — on order | Side wall cutout |
 | Heltec V3/V4 PCB | TBD | Detector CAD |
 | SMA bulkhead cutout | TBD | Detector CAD |
 | HTIT-Tracker dimensions | TBD | Hub CAD |
 | MLX90614 board | TBD | Hub CAD |
 | BME280 board | TBD | Hub CAD |
 
+### Current Onshape document state (v2)
+- `timing-emitter-housing-v2` — active document
+- Body: 80×80×30mm, 5mm walls, 5mm exterior fillets
+- Corner blocks: 12×12mm, fully merged into walls, radiused interior transitions
+- Gasket channel: 2mm wide × 1mm deep, inside corner blocks
+- Insert holes: 4.3mm diameter × 9mm deep, one per corner block
+- Remaining features: switch pocket, IR tube, aim assist LED, USB-C cutout, tripod boss
+
 ### Build order
-1. **Emitter first** — simplest internals, best first Onshape project. Dial in panel lid, tripod mount, and tube geometry.
-2. **Detector second** — carries emitter lessons forward, adds Heltec fitment and antenna bulkhead.
-3. **Hub last** — most complex, most deferred. Design after sensor selection finalized.
+1. **Emitter first** ← in progress
+2. **Detector second** — carries emitter lessons forward
+3. **Hub last** — most complex, most deferred
 
 ---
 
