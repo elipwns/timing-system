@@ -175,7 +175,11 @@ Two built (one per gate).
 - 5mm exterior corner fillets
 - NO antenna
 - Weatherproof
-- **TODO before final print:** Add gusseted standoffs to boss pillars — triangular bracing fins at base of each cylinder to handle screw torque load. Flagged by collaborator review.
+
+### TODO before final print
+- [ ] **Thicken boss cylinder walls** — increase boss OD from 8mm to 10mm. Current 8mm OD causes wall bowing when inserting heat set inserts even at correct temp (230°C). More material needed around insert hole.
+- [ ] **Gusseted standoffs** — triangular bracing fins at base of each boss cylinder. Flagged by collaborator. Prevents torque load from cracking boss at floor joint.
+- [ ] **Tongue clearance** — reduce tongue width from 2mm to 1.6mm (offset 1.7mm + 1.6mm). Current tongue too tight in channel, lid hard to remove.
 
 ### Power budget
 - ~45mA continuous draw
@@ -209,8 +213,12 @@ Two built (one per gate).
 - USB-C accessible on side/bottom
 - TPU printed gasket between lid and body
 - M3 heat set inserts × 4 corners, M3 screws lid to body
-- **TODO before final print:** Add gusseted standoffs to boss pillars (same as emitter)
 - Weatherproof
+
+### TODO before final print
+- [ ] **Thicken boss cylinder walls** — same issue as emitter, increase OD to 10mm
+- [ ] **Gusseted standoffs** — same as emitter
+- [ ] **Tongue clearance** — same fix as emitter lid
 
 ### Power budget
 - ~80-100mA average draw
@@ -280,11 +288,22 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 
 ---
 
+## Heat Set Insert Notes
+
+- M3 insert OD: 4.53mm (caliper-verified)
+- Print hole at 4.3mm for PETG (verified — seats correctly)
+- Iron temp: 230°C for PETG — do NOT use 420°C (causes wall bowing)
+- Use dedicated flat-bottom heat set tip, not soldering tip
+- Let heat do the work — slow 5-8 second sink, no hard pressure
+
+---
+
 ## Print Material Plan
 
 | Use | Material | Reason |
 |---|---|---|
 | Test/geometry prints | PLA | Fast, cheap, good enough for fitment checks |
+| Intermediate tests | PETG | Real material behavior, insert fitment validation |
 | Final field enclosures | ASA | UV stable, high heat tolerance (~95°C), outdoor rated — order when ready |
 | Gaskets | TPU | Flexible, compressible, UV stable, reusable |
 | ABS on hand | Burn through on current project wrapping up | Not ideal for outdoor UV exposure long term |
@@ -307,7 +326,7 @@ The lesson from the Meshtastic build: design around what you can measure, not wh
 | Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
 | 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm | ✅ reserved for detector/Meshtastic |
 | Double-sided tape pads | 2.3 × 11.7 × 11.7mm | ✅ |
-| M3 heat set insert OD | 4.53mm | ✅ — boss OD: 8mm, hole: 4.1mm, boss position: 5mm from interior wall |
+| M3 heat set insert OD | 4.53mm | ✅ — print hole 4.3mm, boss OD needs increase to 10mm |
 | IR LED/receiver package | 5mm diameter | per Adafruit spec — verify on arrival 🔲 |
 | Alignment tube ID | 6mm | derived from LED diameter |
 
