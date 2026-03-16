@@ -4,81 +4,45 @@ Ideas that are too big or too speculative for the README checklist, but worth pr
 
 ---
 
-## 🚨 BLOCKER — IR Sensor Selection
+## 🚨 IR Sensor — TC102 Selected, Alignment TBD
 
-**This must be resolved before enclosure CAD can be finalized.**
+**Status:** TC102 ordered. Alignment tolerance is the open question — test before finalizing enclosure design.
 
-### The problem
+### Commercial benchmark — FarmTek electric eyes
 
-The originally specified Adafruit Break Beam Sensor (product #2168) has a maximum sensing distance of **50cm / 20 inches**. The timing gate needs to span **10-15 feet**. This is a fundamental incompatibility — the sensor selection needs to change.
+The FarmTek wireless timing system (sold via Solo Performance Specialties) represents the commercial standard for autocross/hillclimb electric eyes:
 
-### Use case requirements
+- **200 foot optical range**
+- **"Just roughly eyeball the alignment"** — wide acceptance angle by design
+- Purpose-engineered for motorsport lighting conditions over 25+ years
+- **$330/pair** (spare eyes only, full system much more)
 
-| Requirement | Detail |
-|---|---|
-| **Range** | 10-15 feet minimum (autocross lane width) |
-| **Alignment tolerance** | Must tolerate imperfect setup — hillclimb courses on slopes, uneven ground, fast deployment by one person |
-| **Outdoor** | Full sun, rain, dust |
-| **Response time** | <10ms — cars are fast |
-| **Power** | 5V preferred (matches bq25185 output) or 12V with regulator |
-| **Output** | GPIO-compatible signal or relay contact (into ESP32 interrupt) |
+This is what serious clubs use. The key differentiator is alignment tolerance — their optics are designed to accept rough aim.
 
-### Alignment tolerance is critical
+### TC102 alignment test plan
 
-Autocross on flat pavement — easy, time to align carefully. Hillclimb on a road — slope, limited space, faster setup, may not be able to get tripods perfectly level. The sensor needs enough acceptance angle or beam width to tolerate a few degrees of misalignment without losing the beam.
+The TC102 has ±10° beam angle. Only real-world testing will tell if this is acceptable for field use.
 
-### Options to evaluate
+**Test procedure (do when TC102 arrives):**
+1. Set up both units on tripods at 15 feet apart (autocross lane width)
+2. Deliberately misalign by a few degrees in each axis
+3. Note how much misalignment kills the beam
+4. Try setting up on uneven ground / simulated hillclimb slope
+5. Time how long alignment takes from scratch
 
-**Option 1 — Gate opener photocell (e.g. TOPENS TC102)**
-- Range: 10-46 feet ✅
-- Outdoor rated, weather resistant ✅
-- Lensed optics — decent alignment tolerance ✅
-- Built-in alignment LED on receiver ✅
-- Power: 12-24V AC/DC — needs regulator from 5V bq25185 ⚠️
-- Output: relay contact (NO/NC) — needs wiring to ESP32 GPIO ⚠️
-- Cost: ~$15-20/pair
-- Pro: purpose-built for exactly this use case, proven, cheap
-- Con: not a direct GPIO sensor, relay adds complexity
+**Pass criteria:** Alignment achievable in under 2 minutes by one person on uneven ground.
 
-**Option 2 — Industrial modulated IR pair (38kHz)**
-- Range: up to 7-10 meters with lensed emitter ✅
-- Modulated carrier rejects ambient IR noise (sunlight) ✅
-- More DIY — requires driver circuit for emitter ⚠️
-- TSSP4038 or similar receiver IC
-- Better GPIO integration than relay
-- Cost: ~$5-10 in parts
+**If TC102 fails the test:**
+- Look at wider-acceptance industrial through-beam sensors (Sick, Banner, Omron)
+- These are $50-100/pair but designed for factory floor use — wide acceptance, reliable
+- Or accept that alignment takes longer and build a better bracket/sight system to compensate
 
-**Option 3 — Laser diode + photodiode**
-- Range: effectively unlimited ✅
-- Very precise, narrow beam
-- Alignment is hardest — least forgiving ❌ (bad for hillclimb)
-- Visible laser makes alignment easier
-- Safety considerations for event use ⚠️
-
-**Option 4 — Retroreflective sensor**
-- Single housing, beam bounces off reflector on opposite side
-- Only one side needs power — simpler wiring
-- Range typically shorter than through-beam
-- Reflector still needs alignment
-- Good for narrow courses
-
-### Recommended path
-
-**Start with gate opener photocells (Option 1)** for a working v1 — proven range, proven outdoor use, cheap, alignment indicator built in. Wire relay output to ESP32 GPIO interrupt. Accept the 12V power requirement and use a small buck converter from the 5V bq25185 output... or more simply power the photocell from a separate 12V source and keep the ESP32 on 5V.
-
-**Evaluate modulated IR (Option 2) for v2** — cleaner integration, no relay, more control over beam angle and acceptance cone. Better long-term solution once v1 is proven.
-
-### Impact on enclosure design
-
-The enclosure design started around a 5mm LED through a 6mm tube. Gate opener photocells are self-contained units with their own housing — they would mount externally on the enclosure or on the tripod head directly, not inside the printed enclosure at all. This significantly changes the emitter/detector enclosure design:
-
-- Emitter enclosure becomes: **bq25185 + battery + solar + power switch** — power supply box only
-- The photocell sensor mounts on the outside, wired to the power box
-- The detector enclosure becomes: **ESP32 + bq25185 + battery + solar + relay interface** — with photocell receiver mounted externally
-
-This is actually simpler than trying to build optical alignment into the printed housing.
-
-**CAD work can continue on the enclosure body geometry** (walls, gasket, lid, tripod mount) since that's material-independent. Hold off on the IR tube / LED hole features until sensor selection is confirmed.
+### What your system has that FarmTek doesn't
+- Solar powered — no battery swaps
+- LoRa → cloud in real time
+- Historical data, environmental logging, sector timing
+- ~$100 total hardware cost vs $1200+ full FarmTek system
+- Open source — you can add features
 
 ---
 
