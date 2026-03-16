@@ -52,6 +52,10 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 - 3000mAh LiPo batteries (Amazon, caliper-verified — see below)
 - Double-sided tape pads (caliper-verified — see below)
 
+**To order:**
+- ASA filament — final material for all outdoor field enclosures (emitter, detector). UV stable, high heat tolerance. ABS on hand will be used up on current project first.
+- TPU filament — gaskets
+
 **Hub station sensors — to order (see hub section below)**
 
 ---
@@ -168,8 +172,10 @@ Two built (one per gate).
 - USB-C accessible on side/bottom
 - TPU printed gasket between lid and body (2×2mm cross section, 1mm registration groove)
 - M3 heat set inserts × 4 corners, M3 screws lid to body
+- 5mm exterior corner fillets
 - NO antenna
 - Weatherproof
+- **TODO before final print:** Add gusseted standoffs to boss pillars — triangular bracing fins at base of each cylinder to handle screw torque load. Flagged by collaborator review.
 
 ### Power budget
 - ~45mA continuous draw
@@ -203,6 +209,7 @@ Two built (one per gate).
 - USB-C accessible on side/bottom
 - TPU printed gasket between lid and body
 - M3 heat set inserts × 4 corners, M3 screws lid to body
+- **TODO before final print:** Add gusseted standoffs to boss pillars (same as emitter)
 - Weatherproof
 
 ### Power budget
@@ -273,6 +280,17 @@ All sensors are I2C — daisy chain off two wires from the HTIT-Tracker I2C brea
 
 ---
 
+## Print Material Plan
+
+| Use | Material | Reason |
+|---|---|---|
+| Test/geometry prints | PLA | Fast, cheap, good enough for fitment checks |
+| Final field enclosures | ASA | UV stable, high heat tolerance (~95°C), outdoor rated — order when ready |
+| Gaskets | TPU | Flexible, compressible, UV stable, reusable |
+| ABS on hand | Burn through on current project wrapping up | Not ideal for outdoor UV exposure long term |
+
+---
+
 ## CAD Notes (Onshape)
 
 ### ⚠️ Parts Verification Rule
@@ -289,7 +307,7 @@ The lesson from the Meshtastic build: design around what you can measure, not wh
 | Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
 | 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm | ✅ reserved for detector/Meshtastic |
 | Double-sided tape pads | 2.3 × 11.7 × 11.7mm | ✅ |
-| M3 heat set insert OD | 4.53mm | ✅ — boss OD: 8mm, position: 4mm from interior wall |
+| M3 heat set insert OD | 4.53mm | ✅ — boss OD: 8mm, hole: 4.1mm, boss position: 5mm from interior wall |
 | IR LED/receiver package | 5mm diameter | per Adafruit spec — verify on arrival 🔲 |
 | Alignment tube ID | 6mm | derived from LED diameter |
 
