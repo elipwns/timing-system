@@ -1,6 +1,6 @@
 # Timing Gate Hardware Design Spec
 
-Self-contained, solar-powered IR beam break timing gates. Two gates total (start + finish), each gate consisting of two independent housings on tripods — one emitter side, one receiver side. No wires cross the track. A separate hub/base station sits at the timing table and handles all data aggregation and cloud upload.
+Self-contained, solar-powered IR beam break timing gates. Two gates total (start + finish), each gate consisting of two independent housings on tripods — one emitter side, one receiver side. No wires cross the track. A separate hub/base station sits at the timing table handles all data aggregation and cloud upload.
 
 ---
 
@@ -8,43 +8,91 @@ Self-contained, solar-powered IR beam break timing gates. Two gates total (start
 
 | Enclosure | Qty | Lives | Key constraint |
 |---|---|---|---|
-| **Emitter** | 2 | Field, tripod, weatherproof | Square solar lid, IR LED + aim assist, compact |
-| **Detector (receiver)** | 2 | Field, tripod, weatherproof | Rectangular solar lid, IR phototransistor, SMA antenna |
-| **Hub / base station** | 1 | Timing table, semi-protected | GPS, WiFi, environmental sensors, display — table-friendly form factor |
+| **Emitter** | 2 | Field, tripod, weatherproof | Square solar lid, TC102 emitter mounted externally, power supply box |
+| **Detector** | 2 | Field, tripod, weatherproof | Rectangular solar lid, TC102 receiver + ESP32 + LoRa, relay interface |
+| **Hub / base station** | 1 | Timing table, semi-protected | GPS, WiFi, environmental sensors, display |
 
 ---
 
 ## Physical Setup
 
 ```
-[Emitter]                                [Detector]
-  IR LED ──────────────────────────────→  Phototransistor
-  (dumb, just needs power)                (smart, ESP32 + LoRa)
+[Emitter enclosure]                        [Detector enclosure]
+  bq25185 + LiPo + solar                    bq25185 + LiPo + solar + ESP32
+  MT3608 boost → 12V                        MT3608 boost → 12V
+  TC102 emitter (external mount)            TC102 receiver (external mount)
+  IR beam ──────────────────────────────→   relay → ESP32 GPIO interrupt
 
-  ¼-20 tripod mount                       ¼-20 tripod mount
-  weighted tripod on asphalt              weighted tripod on asphalt
+  ¼-20 tripod mount                         ¼-20 tripod mount
 
-                    both fire LoRa → [Hub at timing table] → WiFi → AWS
+                    ESP32 fires LoRa → [Hub at timing table] → WiFi → AWS
 ```
 
-- Gate width: ~10-15 feet
-- Each field housing is self-contained: solar + LiPo, no cables across track
-- Both housings point at each other — alignment via tripod head rotation
-- Alignment tube on each narrows beam/acceptance cone
+- Gate width: up to 65 feet (TC102 spec), well beyond 10-15 foot requirement
+- Each housing is self-contained: solar + LiPo, no cables across track
+- TC102 sensors mount externally on the enclosure or tripod head, wired to power box
+- TC102 has built-in alignment LED on receiver — status LED turns off when aligned
+
+---
+
+## IR Sensor — TOPENS TC102 Photocell Beam Sensor ✅ SELECTED
+
+**Source**: Amazon ~$15-20/pair
+**Replaces**: Adafruit #2168 (max 50cm range — insufficient for 10-15 foot gate)
+
+### Specifications
+| Spec | Value |
+|---|---|
+| Max range | 20m / 65 feet |
+| Operating voltage | 12-24V DC/AC |
+| Emitter current | 30mA @ 12V |
+| Receiver current | 15mA @ 12V |
+| Wavelength | 940nm |
+| Frequency | 1.92kHz modulated |
+| Beam angle | <±10° |
+| Response time | 10ms max |
+| Output | Relay SPDT (NO/NC dry contact) |
+| Weather rating | Outdoor rated |
+| Dimensions | 75 × 48 × 30mm (both emitter and receiver) |
+| Alignment | Built-in status LED — turns off when beam is aligned |
+
+### Why TC102 vs Adafruit #2168
+- Adafruit #2168: 50cm max range — cannot span 10-15 foot autocross gate
+- TC102: 65 foot range, outdoor rated, modulated IR (rejects sunlight), built-in alignment LED
+- TC102 is purpose-built for exactly this use case (outdoor gate/barrier detection)
+
+### Relay to ESP32 GPIO interface
+The TC102 receiver outputs a relay contact (NO/NC), not a direct GPIO signal. Interface is simple:
+```
+TC102 relay NO terminal → ESP32 GPIO pin
+TC102 relay COM terminal → GND
+ESP32 GPIO → 10kΩ pull-up resistor → 3.3V
+
+Beam intact  = relay closed = GPIO pulled LOW
+Beam broken  = relay open  = GPIO pulled HIGH (interrupt fires)
+```
+Standard active-high interrupt. No additional components beyond the pull-up resistor.
+
+### Power architecture change
+TC102 requires 12V. bq25185 outputs 5V. Solution: MT3608 boost converter module (5V → 12V).
+- MT3608 module: ~$1-2, tiny, 85% efficient
+- Sits inside enclosure between bq25185 5V output and TC102 power wires
+- Both emitter and detector enclosures need one MT3608 each
 
 ---
 
 ## Shopping List — To Order
 
-Items needed before CAD can be finalized or final prints made. Measure everything with calipers on arrival before updating CAD.
-
-| Item | Purpose | Notes |
-|---|---|---|
-| **¼-20 heat set inserts** | Tripod mount boss in enclosure bottom | Need OD to design boss. Standard brass, M6 length. Search "¼-20 heat set insert brass" on Amazon. |
-| **ASA filament** | Final field enclosure prints | UV stable, high heat tolerance. Bambu ASA recommended for compatibility. 1-2 spools. |
-| **TPU filament** | Gaskets for all enclosures | 95A Shore hardness. Bambu TPU 95A recommended. |
-| **Waterproof USB-C panel mount connector** | USB-C access port on enclosure side | Need ~12-14mm cutout diameter. Search "waterproof USB-C panel mount" — measure OD before designing cutout. On-hand connector is 26mm, too large. |
-| **M3 screws** | Lid to body fastening | Flat or button head, length TBD once lid thickness is finalized. ~8-12mm likely. |
+| Item | Qty | Purpose | Notes |
+|---|---|---|---|
+| **TOPENS TC102 photocell sensor** | 2 pairs (4 total) | 2 deployed gates + 2 spare pairs | Search Amazon "TOPENS TC102". ~$15-20/pair. |
+| **MT3608 boost converter module** | 4+ | 5V→12V for TC102 in each enclosure | Pre-adjust to 12V output before installing. Search "MT3608 boost module". ~$1-2 each. |
+| **¼-20 brass heat set inserts** | 8+ | Tripod mount boss, bottom of each enclosure | Measure OD on arrival before designing boss hole. |
+| **ASA filament** | 1-2 spools | Final field enclosure prints | UV stable, high heat tolerance. Bambu ASA recommended. |
+| **TPU filament** | 1 spool | Gaskets for all enclosures | 95A Shore hardness. Bambu TPU 95A recommended. |
+| **Waterproof USB-C panel mount** | 4+ | USB-C charging access on enclosure side | Need ~12-14mm cutout. Measure OD before designing cutout. 26mm unit on hand is too large. |
+| **M3 screws** | 20+ | Lid to body fastening (4 per enclosure) | Button or flat head, length TBD once lid thickness confirmed. ~8-12mm. |
+| **10kΩ resistors** | 10+ | Pull-up on ESP32 GPIO for relay interface | Standard 1/4W. Probably already on hand. |
 
 ---
 
@@ -52,22 +100,63 @@ Items needed before CAD can be finalized or final prints made. Measure everythin
 
 | Qty | Component | Source | Part # | Price | Notes |
 |---|---|---|---|---|---|
-| 5 | bq25185 5V Boost Charger | Adafruit | 6106 | $8.95 | 2x emitter, 2x detector, 1x hub (if solar) |
+| 4 | TOPENS TC102 photocell | Amazon | TC102 | ~$15-20/pair | 2 pairs — 2 gates deployed |
+| 4 | MT3608 boost converter | Amazon | — | ~$1-2 ea | 5V→12V, one per enclosure |
+| 5 | bq25185 5V Boost Charger | Adafruit | 6106 | $8.95 | 2x emitter, 2x detector, 1x hub |
 | 2 | Voltaic P123 0.6W panel | Adafruit | 5856 | $8.95 | Emitter lid, 65.5×65.5mm square |
 | 2 | Voltaic P124 1.2W panel | Adafruit | 5368 | $14.95 | Detector lid, 66×113mm rectangular |
-| 2 | IR Break Beam 5mm | Adafruit | 2168 | $5.95 | One set per gate, 2 gates = 2 sets |
-| 8 | JLJLUP 2000mAh LiPo | Amazon | LP103450 | ~$6.00 | 5 deployed + 3 spares, JST PH 2.0mm |
+| 4 | JLJLUP 2000mAh LiPo | Amazon | LP103450 | ~$6.00 | 2x emitter, 2x detector |
+| 4 | spare JLJLUP 2000mAh LiPo | Amazon | LP103450 | ~$6.00 | Spares |
 
 **Already on hand:**
-- Heltec V3 x2, Heltec V4 x2, HTIT-Tracker x1 (hub candidate)
-- M3 heat set inserts (caliper-verified OD 4.53mm)
-- Schottky diodes
+- Heltec V3 x2, Heltec V4 x2, HTIT-Tracker x1
+- M3 heat set inserts (OD 4.53mm caliper-verified)
+- Schottky diodes, 10kΩ resistors (verify qty)
 - Soldering iron, wire strippers, Dremel, multimeter, digital calipers
-- 3000mAh LiPo batteries (Amazon, caliper-verified — see below)
-- Double-sided tape pads (caliper-verified — see below)
-- Waterproof USB connector (26mm OD — too large for this enclosure, reserved for other project)
+- 3000mAh LiPo batteries (66mm — reserved for detector or Meshtastic)
+- Double-sided tape pads (2.3 × 11.7 × 11.7mm)
+- Waterproof USB connector (26mm OD — too large, reserved for other project)
+- Adafruit #2168 break beam sensors (50cm range — cannot use for gate, repurpose for short-range projects)
 
-**Hub station sensors — to order (see hub section below)**
+---
+
+## Power Budget (Updated for TC102)
+
+All calculations assume 12hr event day, MT3608 boost at 85% efficiency.
+
+### Emitter Node (TC102 emitter + bq25185 + MT3608 boost)
+
+| Component | Current Draw |
+|---|---|
+| TC102 emitter @ 12V | 30mA |
+| MT3608 efficiency loss (5V side) | 30mA × 12V / (5V × 0.85) = **84mA from 5V** |
+| bq25185 quiescent | ~5mA |
+| MT3608 quiescent | ~2mA |
+| **Total from battery** | **~91mA continuous** |
+
+**Battery:** 91mA × 12hr = 1092mAh required → 2000mAh covers with **83% headroom** ✅
+**Solar (P123, 30% cloud efficiency):** 100mA peak × 30% = 30mA average → net drain 61mA in cloud
+**Worst case (no solar, 3 days):** 91mA × 72hr = 6552mAh — battery needs recharge after ~22hrs without solar. With any sun: net positive.
+**Sunny event day:** P123 at peak (100mA) > draw (91mA) → net positive, battery charges ✅
+
+### Detector Node (TC102 receiver + ESP32 + bq25185 + MT3608)
+
+| Component | Current Draw |
+|---|---|
+| TC102 receiver @ 12V | 15mA |
+| MT3608 efficiency loss (5V side) | 15mA × 12V / (5V × 0.85) = **42mA from 5V** |
+| ESP32 active (Heltec V4, avg) | ~80mA |
+| bq25185 quiescent | ~5mA |
+| MT3608 quiescent | ~2mA |
+| **Total from battery** | **~129mA continuous** |
+
+**Battery:** 129mA × 12hr = 1548mAh required → 2000mAh covers with **29% headroom** ✅
+**Solar (P124, 30% cloud efficiency):** 200mA peak × 30% = 60mA average → net drain 69mA in cloud
+**Sunny event day:** P124 at peak (200mA) > draw (129mA) → net positive, battery charges ✅
+**Multi-day without sun:** drains ~1656mAh/day — replace or recharge battery after each event day in prolonged cloud.
+
+### Panel Sizing Verdict
+P123 (emitter) and P124 (detector) remain the correct panel selections even with TC102 power draw. Both are net positive on a sunny event day. Battery alone covers a full 12hr event with margin on both nodes.
 
 ---
 
@@ -75,20 +164,17 @@ Items needed before CAD can be finalized or final prints made. Measure everythin
 
 **URL**: https://www.adafruit.com/product/6106 — $8.95
 
-Standardized across all three enclosure types and Meshtastic outdoor node.
-
 **Key features:**
 - Solar + USB-C simultaneously, no external diode needed
 - Near-MPPT solar optimization
-- Power path — draws from charger first, battery gets remainder
 - Regulated 5V boost output regardless of battery state
 - Onboard LEDs: orange (charging), red (fault), green (3.3V good)
 - JST PH 2-pin battery, screw terminal 5V out, USB-C in, solar solder pads
 
 **Connections:**
-- Solar → VIN/G solder pads (5-18V)
+- Solar → VIN/G solder pads
 - LiPo → JST PH 2-pin BATT
-- Load → 5V screw terminal
+- bq25185 5V out → MT3608 boost input → 12V → TC102
 
 ---
 
@@ -96,248 +182,180 @@ Standardized across all three enclosure types and Meshtastic outdoor node.
 
 **Dimensions**: 34 × 52 × 10mm (spec — verify on arrival 🔲)
 **Connector**: JST PH 2.0mm — matches bq25185 natively
-**Protection**: Built-in PCM
 
 ### Polarity — verify before first connect
-Standard convention: red = P+, black = P-. bq25185 is wired to match. Verify with multimeter before first plug-in. If reversed: pop JST pins with small flathead and swap — 30 second fix, no soldering.
+Verify with multimeter before first plug-in. If reversed: pop JST pins and swap.
 
 ---
 
 ## Battery — 3000mAh LiPo (on hand) ✅
 
 **Dimensions**: 10.3 × 36 × 66mm (caliper-verified)
-**Note**: Reserved for detector or Meshtastic node. Emitter will use JLJLUP 2000mAh when it arrives.
+Reserved for detector node or Meshtastic — 66mm length doesn't fit emitter footprint.
 
 ---
 
 ## Double-Sided Tape Pads (on hand) ✅
 
 **Dimensions**: 2.3 × 11.7 × 11.7mm (caliper-verified)
-For component mounting inside enclosures — bq25185 board, battery securing, etc.
 
 ---
 
 ## Solar Panels
 
-ETFE, IP67, UV resistant, 5-7yr life, 22+% monocrystalline SunPower cells. Solder pads on back.
-Both output ~6-6.1V peak — bq25185 accepts 5-18V solar input, both are in spec.
-
-### Emitter panel — Voltaic P123 (#5856)
-- 65.5 × 65.5 × 3.1mm — square
-- 0.6W, ~120mA peak
+### Emitter — Voltaic P123 (#5856) ✅
+- 65.5 × 65.5 × 3.1mm square, 0.6W, ~100mA peak
 - https://www.adafruit.com/product/5856
 
-### Detector panel — Voltaic P124 (#5368)
-- 66 × 113 × 2.6mm — rectangular
-- 1.2W, ~200mA peak
+### Detector — Voltaic P124 (#5368) ✅
+- 66 × 113 × 2.6mm rectangular, 1.2W, ~200mA peak
 - https://www.adafruit.com/product/5368
 
-### Voltaic stock status (March 2026)
-| Panel | Status |
-|---|---|
-| Small 6V 1W | Out of stock |
-| Medium 6V 2W | Out of stock |
-| Large 6V 3.5W | Out of stock |
-| Huge 6V 6W | No longer stocked |
-| Colossal 6V 9W | Out of stock |
-| 2V 0.3W ETFE | $5.50 — in stock |
-| **5V 1.2W ETFE (P124)** | **$14.95 — in stock ✅ (detector)** |
-| 5V 0.3W ETFE | Out of stock |
-| **5V 0.6W ETFE (P123)** | **$8.95 — in stock ✅ (emitter)** |
-| 6V 2W ETFE | $20.95 — in stock |
-| 5V 5W ETGE | $34.95 — in stock |
-| 5V 10W ETFE | $64.95 — in stock |
-
----
-
-## IR Sensors — Adafruit Break Beam #2168
-
-**URL**: https://www.adafruit.com/product/2168 — $5.95/set
-**LED package**: 5mm diameter — sets alignment tube ID at 6mm
-**Pre-wired** with header ends — wires run back into housing
-
-2 sets ordered (4 total) — 2 deployed, 2 spares.
+Both verified in stock as of March 2026 at Adafruit.
 
 ---
 
 ## Enclosure 1 — Emitter Housing
 
-Two built (one per gate).
+**Role:** Power supply box only. TC102 emitter mounts externally on enclosure face or tripod head.
 
 ### Electronics
-- bq25185 (#6106)
-- JLJLUP 2000mAh LiPo (on order — fits P123 footprint)
-- Voltaic P123 (65.5×65.5mm lid)
-- IR LED from break beam set, through alignment tube
-- Current limiting resistor (5V supply, ~40mA target)
-
-### Status indicators
-- bq25185 onboard LEDs (charging, fault, power good)
-- Aim assist LED: visible red or green, adjacent to IR tube on front face
+- bq25185 (#6106) — solar charging, 5V regulated output
+- JLJLUP 2000mAh LiPo
+- Voltaic P123 lid
+- MT3608 boost module (5V → 12V)
+- Power switch (micro mini slide switch, geometry verified)
+- Red power indicator LED
 
 ### Mechanical
+- 80×80×30mm outer body, 5mm walls
 - ¼-20 heat set insert, bottom — tripod mount (insert on order)
-- Voltaic P123 square panel as top lid (recessed in printed lid tray, lip retains panel)
-- IR LED in 6mm ID × 10-15mm alignment tube, front face
-- Aim assist LED adjacent to tube
-- Waterproof USB-C panel mount on side (connector on order — measure OD before designing cutout)
-- TPU printed gasket between lid and body (2×2mm cross section, 1mm registration groove)
-- M3 heat set inserts × 4 corners outside gasket line, M3 screws lid to body
-- 5mm exterior corner fillets
-- NO antenna
-- Weatherproof
+- Voltaic P123 panel recessed in lid tray
+- TPU gasket, M3 corner screws outside gasket line
+- Waterproof USB-C panel mount on back face (connector on order)
+- Power switch + red LED on back face
+- TC102 emitter mounts on front face externally — cable gland or weatherproof pass-through for 12V wires
+- 5mm exterior fillets
 
 ### TODO before final print
-- [ ] **Waterproof USB-C cutout** — waiting on correct connector (12-14mm panel mount). Design cutout after measuring part.
-- [ ] **¼-20 tripod boss** — waiting on ¼-20 inserts. Design boss after measuring OD.
-- [ ] **Switch pocket** — add to side wall using verified geometry from switch-pocket-test
-- [ ] **IR LED alignment tube** — 6mm ID × 10-15mm through front face wall
-- [ ] **Aim assist LED hole** — adjacent to alignment tube, front face
+- [ ] **USB-C cutout** — measure connector OD on arrival
+- [ ] **¼-20 tripod boss** — measure insert OD on arrival
+- [ ] **Switch pocket** — use verified geometry from switch-pocket-test
+- [ ] **Cable gland / pass-through** — for TC102 emitter wiring, front face
+- [ ] **TC102 external mount bracket** — printed bracket to hold TC102 on front face or tripod head
 
 ### Power budget
-- ~45mA continuous draw
-- Worst case 3-day, no solar: 1215mAh — 2000mAh covers with 65% headroom
-- P123 at 30% cloud efficiency: near net-zero
+- **~91mA continuous draw**
+- 2000mAh battery: ~22hr runtime without solar
+- P123 sunny day: net positive ✅
+- Full 12hr event day: 1092mAh used, 908mAh remaining ✅
 
 ---
 
 ## Enclosure 2 — Detector Housing
 
-Two built (one per gate).
+**Role:** ESP32 + LoRa + power supply. TC102 receiver mounts externally, relay wired to ESP32 GPIO.
 
 ### Electronics
 - Heltec V3 or V4 ESP32
 - bq25185 (#6106)
-- JLJLUP 2000mAh LiPo
-- Voltaic P124 (66×113mm lid)
-- IR phototransistor from break beam set, through alignment tube
+- JLJLUP 2000mAh LiPo (or 3000mAh on hand)
+- Voltaic P124 lid
+- MT3608 boost module (5V → 12V)
+- TC102 receiver relay → 10kΩ pull-up → ESP32 GPIO interrupt
 - SMA bulkhead for LoRa antenna
 
 ### Status indicators
 - bq25185 onboard LEDs
-- Beam aligned LED: external LED on ESP32 GPIO — lights when phototransistor sees IR. Rotate tripod until green.
-- LoRa activity LED: blinks on transmit
+- TC102 built-in alignment LED (on receiver itself)
+- LoRa activity LED: blinks on transmit (ESP32 GPIO)
 
 ### Mechanical
-- ¼-20 heat set insert, bottom — tripod mount (insert on order)
-- Voltaic P124 rectangular panel as top lid
-- IR phototransistor in 6mm ID × 10-15mm alignment tube, front face
+- 80×80×30mm outer body (or sized to fit Heltec V4 — measure first 🔲)
+- ¼-20 heat set insert, bottom — tripod mount
+- Voltaic P124 panel recessed in lid tray
+- TPU gasket, M3 corner screws outside gasket line
 - SMA bulkhead on side
-- Waterproof USB-C panel mount on side (connector on order)
-- TPU printed gasket between lid and body
-- M3 heat set inserts × 4 corners outside gasket line, M3 screws lid to body
-- Weatherproof
+- Waterproof USB-C panel mount on back face
+- Cable gland / pass-through for TC102 receiver wiring
+- TC102 external mount bracket on front face or tripod head
+
+### TODO before final print
+- [ ] **Measure Heltec V4 PCB** — may need to resize enclosure footprint
+- [ ] **USB-C cutout** — measure connector OD
+- [ ] **¼-20 tripod boss** — measure insert OD
+- [ ] **SMA bulkhead cutout** — measure bulkhead OD
+- [ ] **Cable gland** — for TC102 receiver wiring
 
 ### Power budget
-- ~80-100mA average draw
-- 2000mAh covers a full event day; solar extends to multi-day
-- P124 at peak (~200mA): net positive on sunny days
+- **~129mA continuous draw**
+- 2000mAh battery: ~15.5hr runtime without solar
+- P124 sunny day: net positive ✅
+- Full 12hr event day: 1548mAh used, 452mAh remaining ✅
 
 ---
 
 ## Enclosure 3 — Hub / Base Station
 
-One built. Lives at the timing table — not a field node. Form factor is table-friendly rather than weatherproof-tripod.
-
-### Board — HTIT-Tracker
-Already on hand. Purpose-built for this role:
-- Built-in GPS/GNSS — single clock source for all received LoRa timestamps
-- WiFi — posts to AWS from wherever the timing table is
-- LoRa — receives BEAM messages from all detector nodes
-- Display — shows live timing data at the table
-
-### Environmental sensors — wishlist
-
-**Priority 1:** MLX90614 IR thermometer — asphalt surface temperature
-**Priority 2:** BME280/BME680 — ambient temp, humidity, barometric pressure → density altitude
-**Priority 3:** Anemometer — wind speed/direction
-
-All sensors are I2C — daisy chain off HTIT-Tracker I2C breakout.
-
-### Enclosure design notes
-- Deferred until HTIT-Tracker dimensions are measured and sensor selection is finalized
-
----
-
-## Alignment Tube Spec (field nodes only)
-
-- ID: 6mm (5mm LED package + 1mm clearance)
-- Length: 10-15mm
-- Printed as part of housing front face
-- Same spec on emitter and detector for symmetry
+Deferred. Lives at timing table, USB powered. HTIT-Tracker. Environmental sensors TBD.
 
 ---
 
 ## Heat Set Insert Notes
 
-- M3 insert OD: 4.53mm (caliper-verified)
-- Print hole at 4.3mm for PETG (verified — seats correctly)
-- Iron temp: 230°C for PETG — do NOT use 420°C (causes wall bowing)
-- Use dedicated flat-bottom heat set tip, not soldering tip
-- Let heat do the work — slow 5-8 second sink, no hard pressure
-- ¼-20 insert OD: TBD — on order, measure before designing tripod boss
+- M3 insert OD: 4.53mm (caliper-verified) → print hole 4.3mm for PETG
+- Iron temp: 230°C for PETG
+- ¼-20 insert OD: TBD — measure on arrival
 
 ---
 
 ## Print Material Plan
 
-| Use | Material | Reason |
+| Use | Material | Notes |
 |---|---|---|
-| Test/geometry prints | PLA | Fast, cheap, good enough for fitment checks |
-| Intermediate tests | PETG | Real material behavior, insert fitment validation |
-| Final field enclosures | ASA | UV stable, high heat tolerance (~95°C), outdoor rated — on order |
-| Gaskets | TPU | Flexible, compressible, UV stable, reusable — on order |
-| ABS on hand | Burn through on current project wrapping up | Not ideal for outdoor UV exposure long term |
+| Test/geometry prints | PLA | Fitment checks only |
+| Intermediate tests | PETG | Insert fitment, tolerance validation |
+| Final field enclosures | ASA | UV stable, outdoor rated — on order |
+| Gaskets | TPU | 95A, on order |
 
 ---
 
 ## CAD Notes (Onshape)
 
 ### ⚠️ Parts Verification Rule
-**Do not finalize any enclosure dimensions in Onshape until parts are physically in hand and measured with calipers.**
+Do not finalize enclosure dimensions until parts are in hand and measured with calipers.
 
 ### Confirmed dimensions (caliper-verified ✅)
-| Component | Dimensions | Notes |
+| Component | Dimensions |
+|---|---|
+| Micro mini slide switch | 8.64 × 3.74 × 3.60mm body, 1.5mm actuator, ~2mm travel |
+| Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof — test printed, fits well |
+| 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm |
+| Double-sided tape pads | 2.3 × 11.7 × 11.7mm |
+| M3 heat set insert OD | 4.53mm — print hole 4.3mm, corner block 12×12mm |
+
+### Verify on arrival 🔲
+| Component | Spec | Needed for |
 |---|---|---|
-| Micro mini slide switch | 8.64 × 3.74 × 3.60mm body, 1.5mm actuator, ~2mm travel | ✅ |
-| Switch pocket geometry | 8.84 × 3.94mm pocket, 3.7 × 1.7mm slot, 1.4mm roof | ✅ test printed, fits well |
-| 3000mAh LiPo (on hand) | 10.3 × 36 × 66mm | ✅ reserved for detector/Meshtastic |
-| Double-sided tape pads | 2.3 × 11.7 × 11.7mm | ✅ |
-| M3 heat set insert OD | 4.53mm | ✅ — print hole 4.3mm, corner block 12×12mm |
-| IR LED/receiver package | 5mm diameter | per Adafruit spec — verify on arrival 🔲 |
-| Alignment tube ID | 6mm | derived from LED diameter |
+| bq25185 board | 32 × 26.3 × 7.2mm | All enclosures |
+| JLJLUP 2000mAh LiPo | 34 × 52 × 10mm | All enclosures |
+| Voltaic P123 panel | 65.5 × 65.5 × 3.1mm | Emitter lid |
+| Voltaic P124 panel | 66 × 113 × 2.6mm | Detector lid |
+| MT3608 boost module | TBD | Internal layout |
+| TC102 emitter/receiver | 75 × 48 × 30mm (spec) | External mount bracket |
+| ¼-20 heat set insert OD | TBD | Tripod boss hole |
+| Waterproof USB-C panel mount OD | TBD | Side wall cutout |
+| Heltec V3/V4 PCB | TBD | Detector enclosure sizing |
+| SMA bulkhead cutout OD | TBD | Detector side wall |
 
-### From datasheets / spec pages — verify on arrival 🔲
-| Component | Spec dimensions | Needed for |
-|---|---|---|
-| bq25185 board | 32 × 26.3 × 7.2mm | Emitter + Detector CAD |
-| JLJLUP 2000mAh LiPo | 34 × 52 × 10mm | Emitter + Detector CAD |
-| Voltaic P123 panel | 65.5 × 65.5 × 3.1mm | Emitter lid design |
-| Voltaic P124 panel | 66 × 113 × 2.6mm | Detector lid design |
-| ¼-20 heat set insert OD | TBD — on order | Bottom tripod boss |
-| Waterproof USB-C panel mount OD | TBD — on order | Side wall cutout |
-| Heltec V3/V4 PCB | TBD | Detector CAD |
-| SMA bulkhead cutout | TBD | Detector CAD |
-| HTIT-Tracker dimensions | TBD | Hub CAD |
-| MLX90614 board | TBD | Hub CAD |
-| BME280 board | TBD | Hub CAD |
-
-### Current Onshape document state (v2)
-- `timing-emitter-housing-v2` — active document
-- Body: 80×80×30mm, 5mm walls, 5mm exterior fillets
-- Corner blocks: 12×12mm, fully merged into walls, radiused interior transitions
-- Gasket channel: 2mm wide × 1mm deep, inside corner blocks
-- Insert holes: 4.3mm diameter × 9mm deep, one per corner block
-- Remaining features: switch pocket, IR tube, aim assist LED, USB-C cutout, tripod boss
-
-### Build order
-1. **Emitter first** ← in progress
-2. **Detector second** — carries emitter lessons forward
-3. **Hub last** — most complex, most deferred
+### Current Onshape state
+- `timing-emitter-housing-v2` — active
+- Body: 80×80×30mm, 5mm walls, 12×12mm corner blocks, gasket channel, insert holes
+- Remaining: switch pocket, USB-C cutout, cable gland, tripod boss, lid
 
 ---
 
 ## MakerWorld Search Notes
 
 - Electronics enclosures with ¼-20 tripod mounts (photography accessory category)
-- Adafruit snap-on enclosure for bq25185: product #6126 — useful dimension reference
+- Gate opener photocell mounting brackets — search for TC102 or similar
